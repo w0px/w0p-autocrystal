@@ -1,0 +1,12 @@
+/* styles.css */
+
+@font-face {
+    font-family: 'PKMNRBYGSC';
+    src: url('./fonts/PKMN RBYGSC.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'PKMNRBYGSC', sans-serif;
+}

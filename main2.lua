@@ -8,8 +8,8 @@ local species
 local highestAtkDef = 0
 local highestSpeSpc = 0
 local lastShinyTime = os.time()
-local timeSinceLastShiny = 0
-local item = 5
+local timeSinceLastShiny 
+local item 
 local flaskServerURL = "http://127.0.0.1:5000/update_data"
 local printedMessage = false
 local enemy_addr
@@ -18,6 +18,7 @@ local region = memory.readbyte(0x142)
 local encounterCount = 5
 local framesInDirection = 0
 local maxFramesInDirection = 32
+
 json = require("json")
 socket = require("socket")
 http = require("socket.http")
@@ -58,38 +59,10 @@ function shiny(atkdef, spespc)
     return false
 end
 
-function send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
-    local data = {
-        encounterCount = encounterCount,
-        enemy_addr = enemy_addr,
-        item = item,
-        lastShinyTime = lastShinyTime,
-        species = species,
-        spespc = spespc
-    }
-
-    local json_data = json.encode(data)
-
-    local response_body, status_code, headers, status_line = socket.request{
-        url = flaskServerURL,
-        method = "POST",
-        headers = {
-            ["Content-Type"] = "application/json",
-            ["Content-Length"] = #json_data
-        },
-        source = ltn12.source.string(json_data)
-    }
-
-    if status_code == 200 then
-        print("Data sent to Flask successfully")
-    else
-        print("Failed to send data to Flask. Status code:", status_code)
-    end
-end
 
 while true do
     emu.frameadvance()
-    
+ -- open world navigation
     if memory.readbyte(species_addr) == 0 then
         local currentAction = actions2[currentActionIndex2]
 
@@ -106,11 +79,12 @@ while true do
             emu.frameadvance()
         end
     else
-        species = memory.readbyte(species_addr)
-                    
-        if desired_species > 0 and desired_species ~= species then
-            -- do something
-        else
+        -- collecting data
+	species = memory.readbyte(species_addr)
+
+	-- hunting for a specific shiny         
+        --if desired_species > 0 and desired_species ~= species then
+        --else
             while memory.readbyte(dv_flag_addr) ~= 0x01 do
                 emu.frameadvance()
             end
@@ -118,9 +92,37 @@ while true do
             item = memory.readbyte(item_addr)
             atkdef = memory.readbyte(enemy_addr)
             spespc = memory.readbyte(enemy_addr + 1)
-
             highestAtkDef = math.max(highestAtkDef, atkdef)
             highestSpeSpc = math.max(highestSpeSpc, spespc)
+
+            function send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
+                local data = {
+                    encounterCount = encounterCount,
+                    enemy_addr = enemy_addr,
+                    item = item,
+                    lastShinyTime = lastShinyTime,
+                    species = species,
+                    spespc = spespc
+                }
+            
+                local json_data = json.encode(data)
+            
+                local response_body, status_code, headers, status_line = socket.request{
+                    url = flaskServerURL,
+                    method = "POST",
+                    headers = {
+                        ["Content-Type"] = "application/json",
+                        ["Content-Length"] = #json_data
+                    },
+                    source = ltn12.source.string(json_data)
+                }
+            
+                if status_code == 200 then
+                    print("Data sent to Flask successfully")
+                else
+                    print("Failed to send data to Flask. Status code:", status_code)
+                end
+            end
 
             if shiny(atkdef, spespc) then
                 print("Shiny found!!")
@@ -128,11 +130,11 @@ while true do
                 local shinyInfo = "Shiny found!!"
                 send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
                 break
-            else
-                -- do something else
+            
             end
         end
-    end       
+    end 
+        -- combat navigation loop  
     if memory.readbyte(species_addr) ~= 0 then
         for i=1,55,1 do
             emu.frameadvance()

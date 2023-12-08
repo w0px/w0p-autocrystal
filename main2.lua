@@ -18,10 +18,10 @@ local region = memory.readbyte(0x142)
 local encounterCount = 5
 local framesInDirection = 0
 local maxFramesInDirection = 32
-
 json = require("json")
 socket = require("socket")
-http = require("socket.http")
+ltn12 = require("ltn12")
+socket.http = require("socket.http")
 input = {}
 actions = {"A","Right", "Down", "A"}
 currentActionIndex = 1
@@ -62,7 +62,7 @@ end
 
 while true do
     emu.frameadvance()
- -- open world navigation
+    
     if memory.readbyte(species_addr) == 0 then
         local currentAction = actions2[currentActionIndex2]
 
@@ -79,11 +79,10 @@ while true do
             emu.frameadvance()
         end
     else
-        -- collecting data
-	species = memory.readbyte(species_addr)
-
-	-- hunting for a specific shiny         
+        species = memory.readbyte(species_addr)
+                    
         --if desired_species > 0 and desired_species ~= species then
+            -- do something
         --else
             while memory.readbyte(dv_flag_addr) ~= 0x01 do
                 emu.frameadvance()
@@ -106,35 +105,35 @@ while true do
                 }
             
                 local json_data = json.encode(data)
-            
-                local response_body, status_code, headers, status_line = socket.request{
+          
+                local status_code, response_body = socket.http.request{
                     url = flaskServerURL,
                     method = "POST",
-                    headers = {
-                        ["Content-Type"] = "application/json",
-                        ["Content-Length"] = #json_data
-                    },
+                    headers = headers,
                     source = ltn12.source.string(json_data)
-                }
-            
+                 }
+
                 if status_code == 200 then
                     print("Data sent to Flask successfully")
                 else
                     print("Failed to send data to Flask. Status code:", status_code)
                 end
-            end
+            
 
             if shiny(atkdef, spespc) then
                 print("Shiny found!!")
                 lastShinyTime = os.time()
                 local shinyInfo = "Shiny found!!"
-                send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
+                
                 break
             
             end
+
+            send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
+            
         end
     end 
-        -- combat navigation loop  
+
     if memory.readbyte(species_addr) ~= 0 then
         for i=1,55,1 do
             emu.frameadvance()
@@ -154,5 +153,6 @@ while true do
             currentActionIndex = (currentActionIndex % #actions) + 1
             emu.frameadvance()
         end
+        
     end
-
+end

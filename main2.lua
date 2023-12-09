@@ -20,7 +20,6 @@ local framesInDirection = 0
 local maxFramesInDirection = 32
 json = require("json")
 socket = require("socket")
-ltn12 = require("ltn12")
 socket.http = require("socket.http")
 input = {}
 actions = {"A","Right", "Down", "A"}
@@ -81,9 +80,9 @@ while true do
     else
         species = memory.readbyte(species_addr)
                     
-        --if desired_species > 0 and desired_species ~= species then
+        if desired_species > 0 and desired_species ~= species then
             -- do something
-        --else
+        else
             while memory.readbyte(dv_flag_addr) ~= 0x01 do
                 emu.frameadvance()
             end
@@ -104,20 +103,23 @@ while true do
                     spespc = spespc
                 }
             
-                local json_data = json.encode(data)
-          
-                local status_code, response_body = socket.http.request{
-                    url = flaskServerURL,
-                    method = "POST",
-                    headers = headers,
-                    source = ltn12.source.string(json_data)
-                 }
-
+                -- Concatenate variables into a single string
+                local concatenated_data = encounterCount .. "," .. enemy_addr .. "," .. item .. "," .. lastShinyTime .. "," .. species .. "," .. spespc
+            
+                -- Print the concatenated data
+                print("Concatenated data:", concatenated_data)
+            
+                -- Send the concatenated data as the payload
+                local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
+            
                 if status_code == 200 then
                     print("Data sent to Flask successfully")
                 else
                     print("Failed to send data to Flask. Status code:", status_code)
                 end
+            end
+            
+            
             
 
             if shiny(atkdef, spespc) then

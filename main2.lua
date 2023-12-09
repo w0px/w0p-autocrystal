@@ -5,19 +5,18 @@ local desired_species = -1
 local atkdef
 local spespc
 local species
-local highestAtkDef = 0
-local highestSpeSpc = 0
-local lastShinyTime = os.time()
-local timeSinceLastShiny 
-local item 
+local item = 0 
+local shinyvalue = 0
 local flaskServerURL = "http://127.0.0.1:5000/update_data"
 local printedMessage = false
 local enemy_addr
 local version = memory.readbyte(0x141)
 local region = memory.readbyte(0x142)
-local encounterCount = 5
+local encounterCount 
 local framesInDirection = 0
 local maxFramesInDirection = 32
+local highestSpeSpc = 0
+local highestAtkDef = 0
 json = require("json")
 socket = require("socket")
 socket.http = require("socket.http")
@@ -52,12 +51,35 @@ local species_addr = enemy_addr + 0x22
 function shiny(atkdef, spespc)
     if spespc == 0xAA then
         if atkdef == 0x2A or atkdef == 0x3A or atkdef == 0x6A or atkdef == 0x7A or atkdef == 0xAA or atkdef == 0xBA or atkdef == 0xEA or atkdef == 0xFA then
+            shinyvalue=1
             return true
         end
     end
     return false
 end
 
+
+function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc,atkdef)
+    local data = {
+        highestAtkDef= highestAtkDef,
+        highestSpeSpc = highestSpeSpc,
+        item = item,
+        shinyvalue = shinyvalue,
+        species = species,
+        spespc = spespc,
+        atkdef = atkdef
+    }
+
+    -- Concatenate variables into a single string
+    local concatenated_data = highestAtkDef .. "," .. highestSpeSpc .. "," .. item .. "," .. shinyvalue .. "," .. species .. "," .. spespc .. "," .. atkdef
+
+  
+
+    -- Send the concatenated data as the payload
+    local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
+
+    
+end
 
 while true do
     emu.frameadvance()
@@ -78,7 +100,7 @@ while true do
             emu.frameadvance()
         end
     else
-        species = memory.readbyte(species_addr)
+        
                     
         if desired_species > 0 and desired_species ~= species then
             -- do something
@@ -92,49 +114,27 @@ while true do
             spespc = memory.readbyte(enemy_addr + 1)
             highestAtkDef = math.max(highestAtkDef, atkdef)
             highestSpeSpc = math.max(highestSpeSpc, spespc)
-
-            function send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
-                local data = {
-                    encounterCount = encounterCount,
-                    enemy_addr = enemy_addr,
-                    item = item,
-                    lastShinyTime = lastShinyTime,
-                    species = species,
-                    spespc = spespc
-                }
+            species = memory.readbyte(species_addr)
+                      
             
-                -- Concatenate variables into a single string
-                local concatenated_data = encounterCount .. "," .. enemy_addr .. "," .. item .. "," .. lastShinyTime .. "," .. species .. "," .. spespc
-            
-                -- Print the concatenated data
-                print("Concatenated data:", concatenated_data)
-            
-                -- Send the concatenated data as the payload
-                local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
-            
-                if status_code == 200 then
-                    print("Data sent to Flask successfully")
-                else
-                    print("Failed to send data to Flask. Status code:", status_code)
-                end
-            end
             
 
             if shiny(atkdef, spespc) then
                 print("Shiny found!!")
-                lastShinyTime = os.time()
+                shinyvalue = 1
                 local shinyInfo = "Shiny found!!"
                 
                 break
             
             end
 
-            send_data_to_flask(encounterCount, enemy_addr, item, lastShinyTime, species, spespc)
+            send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc,atkdef)
             
         end
     end 
 
     if memory.readbyte(species_addr) ~= 0 then
+
         for i=1,55,1 do
             emu.frameadvance()
         end

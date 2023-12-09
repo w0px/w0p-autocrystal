@@ -119,8 +119,6 @@ while true do
                 end
             end
             
-            
-            
 
             if shiny(atkdef, spespc) then
                 print("Shiny found!!")

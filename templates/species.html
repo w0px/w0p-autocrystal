@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/static/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIF Display</title>
+</head>
+<body>
+
+  <!-- Set the width and height attributes as per your requirements -->
+  <img id="imageOutput" src="/static/gifs/{{data}}.gif" alt="GIF File Content" width="110" height="110">
+  
+
+  <script>
+    // Function to update the image source with a dynamically generated GIF file
+    function updateImageWithDynamicName() {
+      var imageOutput = document.getElementById('imageOutput');
+
+      // Read the species value from the data dictionary
+       // Assuming data['species'] is a string
+      
+      // Construct the URL for the GIF file using the species data
+      const gifFilePath = `/static/gifs/{{ data }}.gif`; // Adjust the path as needed
+      imageOutput.src = gifFilePath;
+    }
+
+    // Refresh the page every 0.5 seconds
+    setTimeout(function() {
+      location.reload();
+    }, 2500);
+  </script>
+</body>
+</html>

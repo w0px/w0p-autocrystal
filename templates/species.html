@@ -5,12 +5,44 @@
   <link rel="stylesheet" href="/static/styles.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GIF Display</title>
+  <style>
+    /* Add your CSS styles here */
+    #container {
+      display: flex;
+      align-items: center;
+    }
+
+    #text-container {
+      margin-right: 0px; /* Adjust the margin as needed */
+    }
+
+    #imageOutput {
+      width: 90px;
+      height: 90px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Set the width and height attributes as per your requirements -->
-  <img id="imageOutput" src="/static/gifs/{{data}}.gif" alt="GIF File Content" width="110" height="110">
-  
+  <div id="container">
+    <div id="text-container">
+      <div id="attack">
+        <span>ATK:</span> {{ data['Attack'] }}
+      </div>  
+      <div id="defense">
+        <span>DEF:</span> {{ data['Defense'] }}
+      </div> 
+      <div id="attack">
+        <span>SPE:</span> {{ data['Special'] }}
+      </div>  
+      <div id="Speed">
+        <span>SPD:</span> {{ data['Speed'] }}
+      </div>
+    </div>
+
+    <!-- Set the width and height attributes as per your requirements -->
+    <img id="imageOutput" src="/static/gifs/{{ data['species'] }}.gif" alt="GIF File Content">
+  </div>
 
   <script>
     // Function to update the image source with a dynamically generated GIF file
@@ -18,7 +50,7 @@
       var imageOutput = document.getElementById('imageOutput');
 
       // Read the species value from the data dictionary
-       // Assuming data['species'] is a string
+      // Assuming data['species'] is a string
       
       // Construct the URL for the GIF file using the species data
       const gifFilePath = `/static/gifs/{{ data }}.gif`; // Adjust the path as needed

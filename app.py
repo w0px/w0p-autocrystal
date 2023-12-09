@@ -33,7 +33,9 @@ def update_data():
         data['Speed'] = speed
         data['Special'] = special
 
-        print(data)  # This will print the updated data
+        
+
+        # print(data)  # This will print the updated data
 
         return 'Data received successfully'
     
@@ -42,7 +44,7 @@ def update_data():
 def species():
     # You can pass the 'species' data to the species.html template
     species_value = data.get('species', '')
-    return render_template('species.html', data=data['species'])
+    return render_template('species.html', data=data)
 
 @app.route('/')
 def index():

@@ -20,8 +20,7 @@
     <span id="localTime"></span>
   </div>
   <div>
-    <span>Session Timer: </span>
-    <span id="sessionTimer"></span>
+    <span>Session Timer: </span>{{ data['SessionStart'] }}
   </div>
 
 
@@ -64,23 +63,16 @@
     var sessionTimerElement = document.getElementById('sessionTimer');
     sessionTimerElement.textContent = hours + ':' + minutes + ':' + seconds;
   }
-
     // Update the local time and session timer every second
     setInterval(function() {
     updateSessionTimer();
   }, 1000);
 
     updateLocalTime();
-    // Call the function initially to set the initial session start time
-  updateSessionTimer();
-  sessionStorage.setItem('sessionStartTime', new Date());
-
-
-    
-        // Refresh the page every 0.5 seconds
-        setTimeout(function() {
-            location.reload();
-        }, 1000);
+       
+// Refresh the page every 0.5 seconds
+setTimeout(function() {
+location.reload();}, 1000);
     </script>
 
 </body>

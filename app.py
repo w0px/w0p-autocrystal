@@ -1,15 +1,25 @@
 from flask import Flask, render_template, request, jsonify
-
+import requests
+webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
 app = Flask(__name__)
 change_count = [0]
-
-# Initialize data as an empty dictionary
+import time
 data = {}
 
+# Function to format seconds into HH:MM:SS
+def format_time(seconds):
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+
+start_time = time.time()
+data = {'SessionStart': format_time(0)}  # Set the initial session start time
 
 
 @app.route('/update_data', methods=['GET', 'POST'])
+
 def update_data():
+    global start_time
     if request.method == 'POST':
         # Get the concatenated data from the request payload
         concatenated_data = request.form.get('payload')
@@ -17,6 +27,8 @@ def update_data():
         # Split the concatenated data into individual values
         highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef = map(int, concatenated_data.split(','))
 
+        elapsed_time = time.time() - start_time
+        
         
         attack = atkdef // 16
         defense = atkdef % 16
@@ -34,6 +46,7 @@ def update_data():
         data['Speed'] = speed
         data['Special'] = special
         data['EncounterCount'] = change_count[0]
+        data['SessionStart'] = format_time(elapsed_time)
 
         
         if 'atkdef' not in data or data['atkdef'] != atkdef:
@@ -52,7 +65,7 @@ def update_data():
             else:
                 print(f"Failed to send message. Status code: {response.status_code}")
 
-        if data['atkdef'] and data['spespc'] == 255:
+        if data['Attack']== 15 and data['Defense']== 15 and data['Speed']== 15 and data['Special']== 15:
             message = "perfect DV {data['species']} encountered"
             payload = {'content': message}
             headers = {'Content-Type': 'application/json'}

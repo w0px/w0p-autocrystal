@@ -1,13 +1,14 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
+change_count = [0]
 
 # Initialize data as an empty dictionary
 data = {}
 
-# Your other routes and functions go here
 
-@app.route('/update_data', methods=['POST'])
+
+@app.route('/update_data', methods=['GET', 'POST'])
 def update_data():
     if request.method == 'POST':
         # Get the concatenated data from the request payload
@@ -32,12 +33,19 @@ def update_data():
         data['Defense'] = defense
         data['Speed'] = speed
         data['Special'] = special
+        data['EncounterCount'] = change_count[0]
 
-        
-
-        # print(data)  # This will print the updated data
+        # Check if atkdef has changed
+        if 'atkdef' not in data or data['atkdef'] != atkdef:
+            change_count[0] += 1  # Increment change count
+            data['atkdef'] = atkdef  # Update the 'data' dictionary
 
         return 'Data received successfully'
+
+    elif request.method == 'GET':
+        # You can modify this logic to return the data in a format suitable for your JavaScript
+        return jsonify(data)
+
     
 #route to handle the 'species' value
 @app.route('/species')

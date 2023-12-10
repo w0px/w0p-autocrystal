@@ -6,13 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GIF Display</title>
   <style>
+    /* Add your CSS styles here */
     #container {
       display: flex;
       align-items: center;
     }
 
     #text-container {
-      margin-right: 0px; 
+      margin-right: 0px; /* Adjust the margin as needed */
     }
 
     #imageOutput {
@@ -39,7 +40,7 @@
       </div>
     </div>
 
-   
+    <!-- Set the width and height attributes as per your requirements -->
     <img id="imageOutput" src="gifFilePath" alt="GIF File Content">
   </div>
 
@@ -71,10 +72,11 @@
       imageOutput.src = gifFilePath;
     }
   
+    // Update values every 0.5 seconds
     setInterval(updateValues, 500);
-
+  
+    // Call the function initially to set the initial values
     updateValues();
-    
   </script>
 </body>
 </html>

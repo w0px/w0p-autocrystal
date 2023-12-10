@@ -4,24 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Page Title</title>
-    
+    <!-- Include your PKMRBYGSC font if needed -->
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     
+<!-- Add these lines in the appropriate places within your HTML structure -->
+<!--<div id="highestSpeSpc">{{ data['highestSpeSpc'] }}</div>-->
+<!--<div id="highestAtkDef">{{ data['highestAtkDef'] }}</div>-->
 
-<div id="encounterCount">{{ data['encounterCount'] }}</div>
-<div id="enemyAddr">{{ data['enemy_addr'] }}</div>
-<div id="item">{{ data['item'] }}</div>
-<div id="timeSinceLastShiny">{{ data['timeSinceLastShiny'] }}</div>
-<div id="species">{{ data['species'] }}</div>
-<div id="spespc">{{ data['spespc'] }}</div>
-<h1>test</h1>
+<div id="attack">
+    <span>Phase total Encounters:</span> {{ data['EncounterCount'] }}
+</div>   
+<div>
+    <span>Local Time: </span>
+    <span id="localTime"></span>
+  </div>
+  <div>
+    <span>Session Timer: </span>
+    <span id="sessionTimer"></span>
+  </div>
 
-   
 
-    <script>
-        
+<script>
+  function updateLocalTime() {
+    var now = new Date();
+    var hours = now.getHours();
+    var minutes = now.getMinutes();
+    var seconds = now.getSeconds();
+
+    // Add leading zeros if needed
+    hours = (hours < 10) ? '0' + hours : hours;
+    minutes = (minutes < 10) ? '0' + minutes : minutes;
+    seconds = (seconds < 10) ? '0' + seconds : seconds;
+
+    // Display the local time
+    var localTimeElement = document.getElementById('localTime');
+    localTimeElement.textContent = hours + ':' + minutes + ':' + seconds;
+  }
+
+    // Update the local time and session timer every second
+    setInterval(function() {
+    updateSessionTimer();
+  }, 1000);
+
+    updateLocalTime();
+    // Call the function initially to set the initial session start time
+  updateSessionTimer();
+  sessionStorage.setItem('sessionStartTime', new Date());
+
+
+    
+        // Refresh the page every 0.5 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 1000);
     </script>
+
 </body>
 </html>

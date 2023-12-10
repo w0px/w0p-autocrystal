@@ -43,6 +43,29 @@
     localTimeElement.textContent = hours + ':' + minutes + ':' + seconds;
   }
 
+  // Function to update the session timer
+  function updateSessionTimer() {
+    var now = new Date();
+    var startTime = new Date(sessionStorage.getItem('sessionStartTime')) || now;
+
+    var elapsedTime = now - startTime;
+    var seconds = Math.floor(elapsedTime / 1000);
+
+    // Calculate hours, minutes, and seconds
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds % 3600) / 60);
+    seconds = seconds % 60;
+
+    // Add leading zeros if needed
+    hours = (hours < 10) ? '0' + hours : hours;
+    minutes = (minutes < 10) ? '0' + minutes : minutes;
+    seconds = (seconds < 10) ? '0' + seconds : seconds;
+
+    // Display the session timer
+    var sessionTimerElement = document.getElementById('sessionTimer');
+    sessionTimerElement.textContent = hours + ':' + minutes + ':' + seconds;
+  }
+
     // Update the local time and session timer every second
     setInterval(function() {
     updateSessionTimer();

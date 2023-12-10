@@ -17,7 +17,7 @@ def update_data():
         # Split the concatenated data into individual values
         highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef = map(int, concatenated_data.split(','))
 
-        # Do something with the data (e.g., store in a database, update variables, etc.)
+        
         attack = atkdef // 16
         defense = atkdef % 16
         speed = spespc // 16
@@ -35,7 +35,7 @@ def update_data():
         data['Special'] = special
         data['EncounterCount'] = change_count[0]
 
-        # Check if atkdef has changed
+        
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
             data['atkdef'] = atkdef  # Update the 'data' dictionary
@@ -43,11 +43,10 @@ def update_data():
         return 'Data received successfully'
 
     elif request.method == 'GET':
-        # You can modify this logic to return the data in a format suitable for your JavaScript
         return jsonify(data)
 
     
-#route to handle the 'species' value
+
 @app.route('/species')
 def species():
     # You can pass the 'species' data to the species.html template

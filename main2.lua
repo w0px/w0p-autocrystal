@@ -103,7 +103,7 @@ while true do
         
                     
         if desired_species > 0 and desired_species ~= species then
-            -- do something
+            
         else
             while memory.readbyte(dv_flag_addr) ~= 0x01 do
                 emu.frameadvance()

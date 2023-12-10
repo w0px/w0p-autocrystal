@@ -39,7 +39,30 @@ def update_data():
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
             data['atkdef'] = atkdef  # Update the 'data' dictionary
+            
+        if data['shinyvalue'] == 1:
+            message = "Prinz von Schiffe ein shiny pokemon wurde gefunden"
+            payload = {'content': message}
+            headers = {'Content-Type': 'application/json'}
 
+            response = requests.post(webhook_url, json=payload, headers=headers)
+
+            if response.status_code == 204:
+                print("Message sent successfully")
+            else:
+                print(f"Failed to send message. Status code: {response.status_code}")
+
+        if data['atkdef'] and data['spespc'] == 255:
+            message = "perfect DV {data['species']} encountered"
+            payload = {'content': message}
+            headers = {'Content-Type': 'application/json'}
+
+            response = requests.post(webhook_url, json=payload, headers=headers)
+
+            if response.status_code == 204:
+                print("Message sent successfully")
+            else:
+                print(f"Failed to send message. Status code: {response.status_code}")
         return 'Data received successfully'
 
     elif request.method == 'GET':

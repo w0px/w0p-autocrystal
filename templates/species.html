@@ -27,40 +27,56 @@
   <div id="container">
     <div id="text-container">
       <div id="attack">
-        <span>ATK:</span> {{ data['Attack'] }}
+        <span>ATK:</span> <span id="attackValue">{{ data['Attack'] }}</span>
       </div>  
       <div id="defense">
-        <span>DEF:</span> {{ data['Defense'] }}
+        <span>DEF:</span> <span id="defenseValue">{{ data['Defense'] }}</span>
       </div> 
-      <div id="attack">
-        <span>SPE:</span> {{ data['Special'] }}
+      <div id="special">
+        <span>SPE:</span> <span id="specialValue">{{ data['Special'] }}</span>
       </div>  
-      <div id="Speed">
-        <span>SPD:</span> {{ data['Speed'] }}
+      <div id="speed">
+        <span>SPD:</span> <span id="speedValue">{{ data['Speed'] }}</span>
       </div>
     </div>
 
     <!-- Set the width and height attributes as per your requirements -->
-    <img id="imageOutput" src="/static/gifs/{{ data['species'] }}.gif" alt="GIF File Content">
+    <img id="imageOutput" src="gifFilePath" alt="GIF File Content">
   </div>
 
   <script>
+    // Function to update data values
+    function updateValues() {
+      // Fetch updated data from the server
+      fetch('/update_data')
+        .then(response => response.json())
+        .then(data => {
+          // Update HTML elements with new data
+          document.getElementById('attackValue').innerText = data['Attack'];
+          document.getElementById('defenseValue').innerText = data['Defense'];
+          document.getElementById('specialValue').innerText = data['Special'];
+          document.getElementById('speedValue').innerText = data['Speed'];
+  
+          // Call the function to update the image
+          updateImageWithDynamicName(data['species']); // Pass the new species data
+        })
+        .catch(error => console.error('Error updating values:', error));
+    }
+  
     // Function to update the image source with a dynamically generated GIF file
-    function updateImageWithDynamicName() {
+    function updateImageWithDynamicName(speciesData) {
       var imageOutput = document.getElementById('imageOutput');
-
-      // Read the species value from the data dictionary
-      // Assuming data['species'] is a string
-      
+  
       // Construct the URL for the GIF file using the species data
-      const gifFilePath = `/static/gifs/{{ data }}.gif`; // Adjust the path as needed
+      const gifFilePath = `/static/gifs/${speciesData}.gif`; // Adjust the path as needed
       imageOutput.src = gifFilePath;
     }
-
-    // Refresh the page every 0.5 seconds
-    setTimeout(function() {
-      location.reload();
-    }, 2500);
+  
+    // Update values every 0.5 seconds
+    setInterval(updateValues, 500);
+  
+    // Call the function initially to set the initial values
+    updateValues();
   </script>
 </body>
 </html>

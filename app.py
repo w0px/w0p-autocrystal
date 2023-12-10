@@ -1,16 +1,23 @@
 from flask import Flask, render_template, request, jsonify
 import requests
+import os
+import time
 webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
 app = Flask(__name__)
 change_count = [0]
-import time
 data = {}
 
-# Function to format seconds into HH:MM:SS
 def format_time(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+
+def write_counter(counter):
+    counter_file_path = 'counter.txt'
+
+    with open(counter_file_path, 'w') as file:
+        file.write(str(counter))
+
 
 start_time = time.time()
 data = {'SessionStart': format_time(0)}  # Set the initial session start time
@@ -47,14 +54,13 @@ def update_data():
         data['Special'] = special
         data['EncounterCount'] = change_count[0]
         data['SessionStart'] = format_time(elapsed_time)
-
         
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
             data['atkdef'] = atkdef  # Update the 'data' dictionary
-            
+          
         if data['shinyvalue'] == 1:
-            message = "Prinz von Schiffe ein shiny pokemon wurde gefunden"
+            message = "shiny encounter"
             payload = {'content': message}
             headers = {'Content-Type': 'application/json'}
 

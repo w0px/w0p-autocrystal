@@ -12,9 +12,6 @@
 <!--<div id="highestSpeSpc">{{ data['highestSpeSpc'] }}</div>-->
 <!--<div id="highestAtkDef">{{ data['highestAtkDef'] }}</div>-->
 
-<div id="attack">
-    <span>Phase total Encounters:</span> {{ data['EncounterCount'] }}
-</div>   
 <div>
     <span>Local Time: </span>
     <span id="localTime"></span>
@@ -22,10 +19,23 @@
   <div>
     <span>Session Timer: </span>{{ data['SessionStart'] }}
   </div>
+<div id="Pencounter">
+    <span>Phase Encounters:</span> {{ data['EncounterCount'] }}
+</div>   
+<div>
+    <span>Total Encounters</span>
+    <span id="totalEncounters">totalEncounters</span>
+</div>
 
 
 <script>
-  function updateLocalTime() {
+
+
+var totalEncounters = 0;
+
+
+
+function updateLocalTime() {
     var now = new Date();
     var hours = now.getHours();
     var minutes = now.getMinutes();
@@ -38,42 +48,16 @@
 
     // Display the local time
     var localTimeElement = document.getElementById('localTime');
-    localTimeElement.textContent = hours + ':' + minutes + ':' + seconds;
-  }
+    localTimeElement.textContent = hours + ':' + minutes + ':' + seconds; 
 
-  // Function to update the session timer
-  function updateSessionTimer() {
-    var now = new Date();
-    var startTime = new Date(sessionStorage.getItem('sessionStartTime')) || now;
-
-    var elapsedTime = now - startTime;
-    var seconds = Math.floor(elapsedTime / 1000);
-
-    // Calculate hours, minutes, and seconds
-    var hours = Math.floor(seconds / 3600);
-    var minutes = Math.floor((seconds % 3600) / 60);
-    seconds = seconds % 60;
-
-    // Add leading zeros if needed
-    hours = (hours < 10) ? '0' + hours : hours;
-    minutes = (minutes < 10) ? '0' + minutes : minutes;
-    seconds = (seconds < 10) ? '0' + seconds : seconds;
-
-    // Display the session timer
-    var sessionTimerElement = document.getElementById('sessionTimer');
-    sessionTimerElement.textContent = hours + ':' + minutes + ':' + seconds;
-  }
-    // Update the local time and session timer every second
-    setInterval(function() {
-    updateSessionTimer();
-  }, 1000);
-
+    }
     updateLocalTime();
        
-// Refresh the page every 0.5 seconds
-setTimeout(function() {
-location.reload();}, 1000);
-    </script>
+    // Refresh the page every 0.5 seconds
+    setTimeout(function() {
+    location.reload();}, 1000);
+
+</script>
 
 </body>
 </html>

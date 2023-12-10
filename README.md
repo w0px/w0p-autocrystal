@@ -1,2 +1,2 @@
 # w0p-autocrystal
-Pokemon Crystal Shiny hunting Bot with web frontend
+Pokemon Crystal Shiny hunting bot with web frontend

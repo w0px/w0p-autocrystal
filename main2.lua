@@ -116,7 +116,7 @@ while true do
             highestSpeSpc = math.max(highestSpeSpc, spespc)
             species = memory.readbyte(species_addr)
                       
-            
+            print (item)
             
 
             if shiny(atkdef, spespc) then

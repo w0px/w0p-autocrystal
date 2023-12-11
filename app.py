@@ -41,8 +41,6 @@ data = {'SessionStart': format_time(0)}
 
 
 @app.route('/update_data', methods=['GET', 'POST'])
-
-@app.route('/update_data', methods=['GET', 'POST'])
 def update_data():
     global start_time
 
@@ -113,6 +111,11 @@ def update_data():
 
     Total_Encounters[0] = read_variable_from_file()
     
+
+@app.route('/highestDV')
+def highestDV():
+    # You can pass the 'species' data to the species.html template
+    return render_template('highestDV.html', data=data)
 
 @app.route('/species')
 def species():

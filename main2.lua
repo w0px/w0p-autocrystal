@@ -10,6 +10,7 @@ local shinyvalue = 0
 local flaskServerURL = "http://127.0.0.1:5000/update_data"
 local printedMessage = false
 local enemy_addr
+
 local version = memory.readbyte(0x141)
 local region = memory.readbyte(0x142)
 local encounterCount 
@@ -47,6 +48,7 @@ end
 
 local dv_flag_addr = enemy_addr + 0x21
 local species_addr = enemy_addr + 0x22
+local item_addr = enemy_addr - 0x05
 
 function shiny(atkdef, spespc)
     if spespc == 0xAA then
@@ -123,7 +125,7 @@ while true do
                 print("Shiny found!!")
                 shinyvalue = 1
                 local shinyInfo = "Shiny found!!"
-                
+                send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc,atkdef)
                 break
             
             end

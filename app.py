@@ -2,10 +2,13 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import os
 import time
+import json
 webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
 app = Flask(__name__)
 change_count = [0]
 data = {}
+Total_Encounters = [0]
+file_path = "Total_Encounters.json"
 
 def format_time(seconds):
     hours, remainder = divmod(seconds, 3600)
@@ -18,15 +21,31 @@ def write_counter(counter):
     with open(counter_file_path, 'w') as file:
         file.write(str(counter))
 
+def read_variable_from_file():
+    try:
+        with open(file_path, "r") as file:
+            data = json.load(file)
+            return data.get('Total_Encounters')
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0  
+
+Total_Encounters = [read_variable_from_file()]
+
+def write_variable_to_file(value):
+    data = {'Total_Encounters': value}
+    with open(file_path, "w") as file:
+        json.dump(data, file)
 
 start_time = time.time()
-data = {'SessionStart': format_time(0)}  # Set the initial session start time
+data = {'SessionStart': format_time(0)} 
 
 
 @app.route('/update_data', methods=['GET', 'POST'])
 
+@app.route('/update_data', methods=['GET', 'POST'])
 def update_data():
     global start_time
+
     if request.method == 'POST':
         # Get the concatenated data from the request payload
         concatenated_data = request.form.get('payload')
@@ -35,8 +54,7 @@ def update_data():
         highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef = map(int, concatenated_data.split(','))
 
         elapsed_time = time.time() - start_time
-        
-        
+
         attack = atkdef // 16
         defense = atkdef % 16
         speed = spespc // 16
@@ -54,11 +72,16 @@ def update_data():
         data['Special'] = special
         data['EncounterCount'] = change_count[0]
         data['SessionStart'] = format_time(elapsed_time)
-        
+        data['Total_Encounters'] = Total_Encounters[0]
+
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
+            Total_Encounters[0] += 1
             data['atkdef'] = atkdef  # Update the 'data' dictionary
-          
+
+        
+        write_variable_to_file(Total_Encounters[0])
+
         if data['shinyvalue'] == 1:
             message = "shiny encounter"
             payload = {'content': message}
@@ -71,8 +94,8 @@ def update_data():
             else:
                 print(f"Failed to send message. Status code: {response.status_code}")
 
-        if data['Attack']== 15 and data['Defense']== 15 and data['Speed']== 15 and data['Special']== 15:
-            message = "perfect DV {data['species']} encountered"
+        if data['Attack'] == 15 and data['Defense'] == 15 and data['Speed'] == 15 and data['Special'] == 15:
+            message = f"perfect DV {data['species']} encountered"
             payload = {'content': message}
             headers = {'Content-Type': 'application/json'}
 
@@ -82,11 +105,13 @@ def update_data():
                 print("Message sent successfully")
             else:
                 print(f"Failed to send message. Status code: {response.status_code}")
+
         return 'Data received successfully'
 
     elif request.method == 'GET':
         return jsonify(data)
 
+    Total_Encounters[0] = read_variable_from_file()
     
 
 @app.route('/species')

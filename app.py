@@ -19,11 +19,6 @@ def format_time(seconds):
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
 
-def write_counter(counter):
-    counter_file_path = 'counter.txt'
-
-    with open(counter_file_path, 'w') as file:
-        file.write(str(counter))
 
 def read_variable_from_file():
     try:

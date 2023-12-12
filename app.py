@@ -11,7 +11,9 @@ app = Flask(__name__)
 change_count = [0]
 data = {}
 Total_Encounters = [0]
+Encounters_shiny = [0]
 file_path = "Total_Encounters.json"
+file_path2 = "Encounters_shiny.json"
 item_name = "none"
 
 def format_time(seconds):
@@ -86,9 +88,10 @@ def update_data():
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
             Total_Encounters[0] += 1
+            Encounters_shiny[0] += 1
             data['atkdef'] = atkdef  # Update the 'data' dictionary
 
-        print (data['item_name'])
+        print (Encounters_shiny[0])
         write_variable_to_file(Total_Encounters[0])
 
         if data['shinyvalue'] == 1:

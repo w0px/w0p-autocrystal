@@ -1,14 +1,18 @@
 from flask import Flask, render_template, request, jsonify
+from modules.helditems import item_names
+
 import requests
 import os
 import time
 import json
+
 webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
 app = Flask(__name__)
 change_count = [0]
 data = {}
 Total_Encounters = [0]
 file_path = "Total_Encounters.json"
+item_name = "none"
 
 def format_time(seconds):
     hours, remainder = divmod(seconds, 3600)
@@ -58,10 +62,18 @@ def update_data():
         speed = spespc // 16
         special = spespc % 16
 
+        def get_item_name(item):
+        # Check if the item value is in the dictionary
+            if item in item_names:
+             return item_names[item]
+            elif item == '0':
+             return 'None'
+            else:
+             return 'Unknown'
+
         # Update the 'data' dictionary
         data['highestAtkDef'] = highestAtkDef
         data['highestSpeSpc'] = highestSpeSpc
-        data['item'] = item
         data['shinyvalue'] = shinyvalue
         data['species'] = species
         data['Attack'] = attack
@@ -71,13 +83,17 @@ def update_data():
         data['EncounterCount'] = change_count[0]
         data['SessionStart'] = format_time(elapsed_time)
         data['Total_Encounters'] = Total_Encounters[0]
+        data['item'] = item
+        data['item_name'] = get_item_name(item)
+
+        
 
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
             Total_Encounters[0] += 1
             data['atkdef'] = atkdef  # Update the 'data' dictionary
 
-        
+        print (data['item_name'])
         write_variable_to_file(Total_Encounters[0])
 
         if data['shinyvalue'] == 1:

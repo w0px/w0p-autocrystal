@@ -8,10 +8,6 @@
 </head>
 <body>
     
-<!-- Add these lines in the appropriate places within your HTML structure -->
-<!--<div id="highestSpeSpc">{{ data['highestSpeSpc'] }}</div>-->
-<!--<div id="highestAtkDef">{{ data['highestAtkDef'] }}</div>-->
-
 <div>
     <span>Local Time: </span>
     <span id="localTime"></span>
@@ -21,7 +17,12 @@
   </div>
 <div id="Pencounter">
     <span>Phase Encounters:</span> {{ data['EncounterCount'] }}
-</div>   
+</div>  
+<div>
+    <span>Encounters since last shiny:</span>
+    <span id="data['Encounters_shiny']"></span>{{data['Encounters_shiny']}}
+</div> 
+<br>
 <div>
     <span>Total Encounters:</span>
     <span id="{{data['Total_Encounters']}}"></span>{{data['Total_Encounters']}}
@@ -29,10 +30,6 @@
 
 
 <script>
-
-
-var totalEncounters = 0;
-
 
 
 function updateLocalTime() {

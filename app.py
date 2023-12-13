@@ -30,11 +30,26 @@ def read_variable_from_file():
     except (FileNotFoundError, json.JSONDecodeError):
         return 0  
 
-Total_Encounters = [read_variable_from_file()]
+Total_Encounters = read_variable_from_file()
+
+def read_variable_from_file2():
+    try:
+        with open(file_path2, "r") as file:
+            data = json.load(file)
+            return data.get('Encounters_shiny')
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0  
+
+Encounters_shiny = read_variable_from_file2()
 
 def write_variable_to_file(value):
     data = {'Total_Encounters': value}
     with open(file_path, "w") as file:
+        json.dump(data, file)
+
+def write_variable_to_file2(value):
+    data = {'Encounters_shiny': value}
+    with open(file_path2, "w") as file:
         json.dump(data, file)
 
 start_time = time.time()
@@ -66,8 +81,10 @@ def update_data():
             elif item == '0':
              return 'None'
             else:
-             return 'Unknown'
+             return [item]
 
+
+        Encounters_shiny = read_variable_from_file2()
         # Update the 'data' dictionary
         data['highestAtkDef'] = highestAtkDef
         data['highestSpeSpc'] = highestSpeSpc
@@ -79,23 +96,26 @@ def update_data():
         data['Special'] = special
         data['EncounterCount'] = change_count[0]
         data['SessionStart'] = format_time(elapsed_time)
-        data['Total_Encounters'] = Total_Encounters[0]
+        data['Total_Encounters'] = Total_Encounters
         data['item'] = item
         data['item_name'] = get_item_name(item)
+        data['Encounters_shiny'] = Encounters_shiny
 
-        
 
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
             Total_Encounters[0] += 1
-            Encounters_shiny[0] += 1
+            Encounters_shiny += 1
             data['atkdef'] = atkdef  # Update the 'data' dictionary
 
-        print (Encounters_shiny[0])
-        write_variable_to_file(Total_Encounters[0])
+        # print (data['item_name'])
+        write_variable_to_file(Total_Encounters)
+        write_variable_to_file2(Encounters_shiny)
 
         if data['shinyvalue'] == 1:
             message = "shiny encounter"
+            Encounters_shiny = 0
+            write_variable_to_file2(Encounters_shiny)
             payload = {'content': message}
             headers = {'Content-Type': 'application/json'}
 
@@ -140,6 +160,18 @@ def species():
 @app.route('/')
 def index():
     return render_template('index.html', data=data)
+
+@app.route('/get_badge_values')
+def get_badge_values():
+    # Extract values from the 'data' dictionary
+    latest_values = {
+        'Attack': data.get('Attack', 0),
+        'Defense': data.get('Defense', 0),
+        'Speed': data.get('Speed', 0),
+        'Special': data.get('Special', 0),
+        'item_name': data.get('item_name', 'None'),
+    }
+    return jsonify(latest_values)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,4 +1,4 @@
-<!-- highestDV.html -->
+<!-- recentEncounters.html -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,92 +6,87 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/static/styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Highest DV</title>
+    <title>Recent Encounters</title>
     <!-- Add your CSS styles here if needed -->
 </head>
 <body>
 
-
-
-<div id="rankings-container">
-    <!-- Top 3 Rankings -->
-    <div class="ranking" id="rank1"></div>
-    <div class="ranking" id="rank2"></div>
-    <div class="ranking" id="rank3"></div>
+<div id="recent-encounters-container">
+    <!-- 3 Most Recent Encounters -->
+    <div class="recent-encounter" id="recent1"></div>
+    <div class="recent-encounter" id="recent2"></div>
+    <div class="recent-encounter" id="recent3"></div>
 </div>
 
 <script>
-    // Initialize an array to store the badge values
-    let badgeValues = [];
+    // Initialize an array to store the recent encounter values
+    let recentEncounters = [];
 
-    // Function to update the badge table
-    function updateBadgeTable() {
-        // Sort the badge values in descending order
-        badgeValues.sort((a, b) => {
-            // Compare the values based on the sum
-            const sumA = a.reduce((acc, val) => acc + val, 0);
-            const sumB = b.reduce((acc, val) => acc + val, 0);
-            return sumB - sumA;
-        });
+    // Function to update the recent encounters list
+    function updateRecentEncountersList() {
+        // Get the recent-encounters-container element
+        const recentEncountersContainer = document.getElementById("recent-encounters-container");
 
-        // Get the rankings-container element
-        const rankingsContainer = document.getElementById("rankings-container");
+        // Clear existing recent encounters in the container
+        recentEncountersContainer.innerHTML = '';
 
-        // Clear existing rankings in the container
-        rankingsContainer.innerHTML = '';
+        // Add sections for the recent encounters
+        for (let i = 0; i < recentEncounters.length; i++) {
+            const encounterElement = document.createElement('div');
+            encounterElement.className = 'recent-encounter';
 
-        // Add sections for the top 3 badge values
-        for (let i = 0; i < Math.min(badgeValues.length, 3); i++) {
-            const rankElement = document.createElement('div');
-            rankElement.className = 'ranking';
-
-            // Set the content for each ranking
-            rankElement.innerHTML = `
-                <span>ATK: ${badgeValues[i][0]}</span><br>
-                <span>DEF: ${badgeValues[i][1]}</span><br>
-                <span>SPE: ${badgeValues[i][2]}</span><br>
-                <span>SPD: ${badgeValues[i][3]}</span><br>
+            // Set the content for each recent encounter
+            encounterElement.innerHTML = `
+                <span>ATK: ${recentEncounters[i].Attack}</span><br>
+                <span>DEF: ${recentEncounters[i].Defense}</span><br>
+                <span>SPE: ${recentEncounters[i].Speed}</span><br>
+                <span>SPD: ${recentEncounters[i].Special}</span><br>
                 <img src="gifFilePath" alt="GIF File Content"><br>
-                <span>ITEM: ${badgeValues[i][4]}</span><br><br>
+                <span>ITEM: ${recentEncounters[i].item_name}</span><br><br>
             `;
 
-            // Append the ranking section to the container
-            rankingsContainer.appendChild(rankElement);
+            // Append the recent encounter section to the container
+            recentEncountersContainer.appendChild(encounterElement);
         }
     }
 
-    // Function to receive values from Flask server
-    function receiveValuesFromServer(data) {
+    // Function to receive values for recent encounters from Flask server
+    function receiveRecentEncounterFromServer(data) {
         // Check if all required fields are present in the received data
         if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'item_name' in data) {
-            // Add the new badge values to the array
-            badgeValues.push([
-                data['Attack'],
-                data['Defense'],
-                data['Speed'],
-                data['Special'],
-                data['item_name']
-            ]);
+            // Add the new recent encounter values to the array
+            recentEncounters.unshift({
+                'Attack': data['Attack'],
+                'Defense': data['Defense'],
+                'Speed': data['Speed'],
+                'Special': data['Special'],
+                'item_name': data['item_name']
+            });
 
-            // Update the table
-            updateBadgeTable();
+            // Keep only the latest 3 recent encounters
+            if (recentEncounters.length > 3) {
+                recentEncounters.pop();
+            }
+
+            // Update the recent encounters list
+            updateRecentEncountersList();
         } else {
             console.error('Received data is missing required fields:', data);
         }
     }
 
-    // Fetch the latest badge values from Flask server
-    function fetchLatestBadgeValues() {
-        fetch('/get_badge_values')
+    // Fetch the latest recent encounter values from Flask server
+    function fetchLatestRecentEncounterValues() {
+        fetch('/get_recent_encounter_values')
             .then(response => response.json())
-            .then(data => receiveValuesFromServer(data))
-            .catch(error => console.error('Error fetching latest badge values:', error));
+            .then(data => receiveRecentEncounterFromServer(data))
+            .catch(error => console.error('Error fetching latest recent encounter values:', error));
     }
 
-    // Simulate data changes every few seconds (replace with your actual update mechanism)
+    // Simulate data changes for recent encounters every few seconds
     setInterval(() => {
-        // Fetch the latest badge values from Flask server
-        fetchLatestBadgeValues();
+        // Fetch the latest recent encounter values from Flask server
+        fetchLatestRecentEncounterValues();
     }, 5000);
 </script>
 

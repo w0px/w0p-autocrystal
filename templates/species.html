@@ -38,10 +38,12 @@
       <div id="speed">
         <span>SPD:</span> <span id="speedValue">{{ data['Speed'] }}</span>
       </div>
+     
     </div>
-
-    <!-- Set the width and height attributes as per your requirements -->
     <img id="imageOutput" src="gifFilePath" alt="GIF File Content">
+  </div>
+  <div id="item">
+    <span>ITEM:</span> <span id="itemValue">{{ data['itemname'] }}</span>
   </div>
 
   <script>
@@ -56,7 +58,9 @@
           document.getElementById('defenseValue').innerText = data['Defense'];
           document.getElementById('specialValue').innerText = data['Special'];
           document.getElementById('speedValue').innerText = data['Speed'];
-  
+          document.getElementById('itemValue').innerText = data['itemname'];
+          
+
           // Call the function to update the image
           updateImageWithDynamicName(data['species']); // Pass the new species data
         })

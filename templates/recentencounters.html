@@ -42,7 +42,7 @@
                 <span>DEF: ${recentEncounterValues[i]['Defense']}</span><br>
                 <span>SPE: ${recentEncounterValues[i]['Speed']}</span><br>
                 <span>SPD: ${recentEncounterValues[i]['Special']}</span><br>
-                <img src="gifFilePath" alt="GIF File Content"><br>
+                <img src="${getGifFilePath(recentEncounterValues[i]['Species'])}" alt="GIF File Content"><br>
                 <span>ITEM: ${recentEncounterValues[i]['item_name']}</span><br><br>
             `;
 
@@ -58,7 +58,7 @@
             const data = await response.json();
 
             // Check if all required fields are present in the received data
-            if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'item_name' in data) {
+            if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'item_name' in data && 'Species' in data) {
                 // Convert data to a JSON string for comparison
                 const newDataString = JSON.stringify(data);
 
@@ -70,7 +70,8 @@
                         'Defense': data['Defense'],
                         'Speed': data['Speed'],
                         'Special': data['Special'],
-                        'item_name': data['item_name']
+                        'item_name': data['item_name'],
+                        'Species': data['Species']
                     });
 
                     // Update the table
@@ -91,6 +92,11 @@
     setInterval(() => {
         fetchLatestRecentEncounterValues();
     }, 2000);
+
+    // Function to construct the URL for the GIF file
+    function getGifFilePath(speciesData) {
+        return `/static/gifs/${speciesData}.gif`; // Adjust the path as needed
+    }
 </script>
 
 </body>

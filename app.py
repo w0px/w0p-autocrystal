@@ -151,6 +151,11 @@ def highestDV():
     # You can pass the 'species' data to the species.html template
     return render_template('highestDV.html', data=data)
 
+@app.route('/recentencounters')
+def recentencounters():
+    # You can pass the 'species' data to the species.html template
+    return render_template('recentencounters.html', data=data)
+
 @app.route('/species')
 def species():
     # You can pass the 'species' data to the species.html template
@@ -170,6 +175,7 @@ def get_badge_values():
         'Speed': data.get('Speed', 0),
         'Special': data.get('Special', 0),
         'item_name': data.get('item_name', 'None'),
+        'Species': data.get('species', 0),
     }
     return jsonify(latest_values)
 

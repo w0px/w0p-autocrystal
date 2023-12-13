@@ -137,7 +137,7 @@ while true do
 
     if memory.readbyte(species_addr) ~= 0 then
 
-        for i=1,55,1 do
+        for i=1,74,1 do
             emu.frameadvance()
         end
 

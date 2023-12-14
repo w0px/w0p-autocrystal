@@ -45,8 +45,8 @@
         // Sort the badge values in descending order
         badgeValues.sort((a, b) => {
             // Compare the values based on the sum of Attack, Defense, Speed, and Special only
-            const sumA = a.reduce((acc, val) => acc + val, 0);
-            const sumB = b.reduce((acc, val) => acc + val, 0);
+            const sumA = a.slice(0, 4).reduce((acc, val) => acc + val, 0);
+            const sumB = b.slice(0, 4).reduce((acc, val) => acc + val, 0);
             return sumB - sumA;
         });
 
@@ -67,7 +67,7 @@
                     <span>ATK: ${badgeValues[i][0]}</span><br>
                     <span>DEF: ${badgeValues[i][1]}</span><br>
                     <span>SPE: ${badgeValues[i][2]}</span><br>
-                    <span>SPD: ${badgeValues[i][3]}</span><br><br><br>
+                    <span>SPD: ${badgeValues[i][3]}</span><br><br>
                     <span>ITEM: ${badgeValues[i][5]}</span><br><br>
                 </div>
                 <img src="${getGifFilePath(badgeValues[i][4])}" alt="GIF File Content">
@@ -86,7 +86,7 @@
             const data = await response.json();
 
             // Check if all required fields are present in the received data
-            if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'item_name' in data) {
+            if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'item_name' in data && 'Species' in data) {
                 // Convert data to a JSON string for comparison
                 const newDataString = JSON.stringify(data);
 

@@ -1,5 +1,3 @@
-<!-- highestDV.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Highest DV</title>
     <!-- Add your CSS styles here if needed -->
+    <style>
+        /* Add your CSS styles here */
+        .ranking {
+            display: flex;
+            align-items: center; /* Center items vertically */
+            margin-bottom: 1px; /* Adjust the margin as needed */
+        }
+
+        .ranking img {
+            margin-left: 1px; /* Adjust the margin for the image */
+            margin-top: -45px;
+            width: 90px; /* Adjust the width of the image as needed */
+            height: 90px; /* Adjust the height of the image as needed */
+        }
+
+        .ranking div {
+            margin-right: 10px; /* Adjust the margin between text and image */
+        }
+    </style>
 </head>
 <body>
 
@@ -27,7 +44,7 @@
     function updateBadgeTable() {
         // Sort the badge values in descending order
         badgeValues.sort((a, b) => {
-            // Compare the values based on the sum
+            // Compare the values based on the sum of Attack, Defense, Speed, and Special only
             const sumA = a.reduce((acc, val) => acc + val, 0);
             const sumB = b.reduce((acc, val) => acc + val, 0);
             return sumB - sumA;
@@ -46,12 +63,15 @@
 
             // Set the content for each ranking
             rankElement.innerHTML = `
-                <span>ATK: ${badgeValues[i][0]}</span><br>
-                <span>DEF: ${badgeValues[i][1]}</span><br>
-                <span>SPE: ${badgeValues[i][2]}</span><br>
-                <span>SPD: ${badgeValues[i][3]}</span><br>
-                <img src="${getGifFilePath(badgeValues[i][4])}" alt="GIF File Content"><br>
-                <span>ITEM: ${badgeValues[i][5]}</span><br><br>
+                <div>
+                    <span>ATK: ${badgeValues[i][0]}</span><br>
+                    <span>DEF: ${badgeValues[i][1]}</span><br>
+                    <span>SPE: ${badgeValues[i][2]}</span><br>
+                    <span>SPD: ${badgeValues[i][3]}</span><br><br><br>
+                    <span>ITEM: ${badgeValues[i][5]}</span><br><br>
+                </div>
+                <img src="${getGifFilePath(badgeValues[i][4])}" alt="GIF File Content">
+                
             `;
 
             // Append the ranking section to the container
@@ -66,7 +86,7 @@
             const data = await response.json();
 
             // Check if all required fields are present in the received data
-            if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'Species' in data && 'item_name' in data) {
+            if ('Attack' in data && 'Defense' in data && 'Speed' in data && 'Special' in data && 'item_name' in data) {
                 // Convert data to a JSON string for comparison
                 const newDataString = JSON.stringify(data);
 
@@ -78,8 +98,8 @@
                         data['Defense'],
                         data['Speed'],
                         data['Special'],
-                        data['Species'],  
-                        data['item_name']
+                        data['Species'], // Keep Species for displaying purposes
+                        data['item_name'] // Keep item_name for displaying purposes
                     ]);
 
                     // Update the table

@@ -43,7 +43,10 @@
     <img id="imageOutput" src="gifFilePath" alt="GIF File Content">
   </div>
   <div id="item">
-    <span>ITEM:</span> <span id="itemValue">{{ data['itemname'] }}</span>
+    <span>ITEM:</span> <span id="itemValue">{{ data['itemname'] }}</span><br>
+  </div>
+  <div id="steak">
+    <span>Streak:</span> <span id="streakvalue">{{ data['ConsecutiveEncounterCount'] }}</span>
   </div>
 
   <script>
@@ -59,6 +62,7 @@
           document.getElementById('specialValue').innerText = data['Special'];
           document.getElementById('speedValue').innerText = data['Speed'];
           document.getElementById('itemValue').innerText = data['itemname'];
+          document.getElementById('streakvalue').innerText = data['ConsecutiveEncounterCount'];
           
 
           // Call the function to update the image

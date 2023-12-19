@@ -4,6 +4,7 @@ from modules.helditems import item_names
 import requests
 import os
 import time
+import datetime 
 import json
 
 webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
@@ -14,12 +15,24 @@ Total_Encounters = [0]
 Encounters_shiny = [0]
 file_path = "Total_Encounters.json"
 file_path2 = "Encounters_shiny.json"
+recent_shiny_file_path = "Recent_Shiny_Encounters.json"
 item_name = "none"
 current_species = 0
 consecutive_encounter_count = 0
 last_change_count = change_count[0]
 current_streak_species = 0
 longest_streak = 0
+
+def read_recent_shiny_from_file():
+    try:
+        with open(recent_shiny_file_path, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def write_recent_shiny_to_file(recent_shiny):
+    with open(recent_shiny_file_path, "w") as file:
+        json.dump(recent_shiny, file)
 
 def format_time(seconds):
     hours, remainder = divmod(seconds, 3600)
@@ -68,9 +81,12 @@ def update_data():
     global current_streak_species
     global longest_streak
 
+    
+
     if request.method == 'POST':
         # Get the concatenated data from the request payload
         concatenated_data = request.form.get('payload')
+
 
         # Split the concatenated data into individual values
         highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef = map(int, concatenated_data.split(','))
@@ -107,9 +123,11 @@ def update_data():
         data['item'] = item
         data['item_name'] = get_item_name(item)
         data['Encounters_shiny'] = Encounters_shiny
-        data['ConsecutiveEncounterCount'] = consecutive_encounter_count
+        data['consecutive_encounter_count'] = consecutive_encounter_count
         data['CurrentStreakSpecies'] = current_streak_species
         data['LongestStreak'] = longest_streak
+        data['RecentShinyEncounters'] = read_recent_shiny_from_file()
+
 
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  # Increment change count
@@ -125,7 +143,7 @@ def update_data():
                 current_species = species
                 consecutive_encounter_count = 1
 
-            data['ConsecutiveEncounterCount'] = consecutive_encounter_count
+            data['consecutive_encounter_count'] = consecutive_encounter_count
             data['atkdef'] = atkdef  # Update the 'data' dictionary
 
             # Update the longest streak
@@ -142,9 +160,29 @@ def update_data():
         write_variable_to_file2(Encounters_shiny)
 
         if data['shinyvalue'] == 1:
-            message = f"Shiny encounter! Consecutive encounters of {data['species']}: {consecutive_encounter_count}"
+            message = f"Shiny encounter!"
             Encounters_shiny = 0
+            data['shiny_time']= datetime.datetime.utcnow().isoformat()
             write_variable_to_file2(Encounters_shiny)
+            
+
+            recent_shiny = {
+            'Species': data['species'],
+            'Attack': data['Attack'],
+            'Defense': data['Defense'],
+            'Speed': data['Speed'],
+            'Special': data['Special'],
+            'Time': data['shiny_time'],
+            'ItemName': data['item_name']
+            }
+
+            recent_shiny_list = read_recent_shiny_from_file()
+            recent_shiny_list.insert(0, recent_shiny)  # Insert at the beginning
+
+            # Keep only the last 3 shiny encounters
+            recent_shiny_list = recent_shiny_list[:3]
+
+            write_recent_shiny_to_file(recent_shiny_list)
             payload = {'content': message}
             headers = {'Content-Type': 'application/json'}
 
@@ -159,9 +197,6 @@ def update_data():
             message = f"perfect DV {data['species']} encountered"
             payload = {'content': message}
             headers = {'Content-Type': 'application/json'}
-
-           
-
 
             response = requests.post(webhook_url, json=payload, headers=headers)
 
@@ -188,10 +223,14 @@ def recentencounters():
     # You can pass the 'species' data to the species.html template
     return render_template('recentencounters.html', data=data)
 
+@app.route('/recentshinies')
+def recentshinies():
+    # You can pass the 'species' data to the species.html template
+    return render_template('recentshinies.html', data=data)
+
 @app.route('/species')
 def species():
     # You can pass the 'species' data to the species.html template
-    species_value = data.get('species', '')
     return render_template('species.html', data=data)
 
 @app.route('/streak')
@@ -213,6 +252,7 @@ def get_badge_values():
         'Special': data.get('Special', 0),
         'item_name': data.get('item_name', 'None'),
         'Species': data.get('species', 0),
+        'Streak':  data.get('consecutive_encounter_count', 0),
     }
     return jsonify(latest_values)
 

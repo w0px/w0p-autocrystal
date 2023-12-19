@@ -22,15 +22,15 @@ json = require("json")
 socket = require("socket")
 socket.http = require("socket.http")
 input = {}
-actions = {"A","Right", "Down", "A"}
+actions = {"B","Right","Right","Down", "A"}
 currentActionIndex = 1
 framesInAction = 0
 framesPerAction = 2
 input2 = {}
-actions2 = {"Right", "Up", "Left", "Down", "A"}
+actions2 = {"Right", "Up", "Left", "Down"}
 currentActionIndex2 = 1
 framesInAction2 = 0
-framesPerAction2 = 2
+framesPerAction2 = 3
 
 -- version check
 if version == 0x54 then
@@ -90,6 +90,7 @@ while true do
         local currentAction = actions2[currentActionIndex2]
 
         input[currentAction] = true
+        emu.frameadvance()
         joypad.set(input)
         emu.frameadvance()
         input[currentAction] = false
@@ -98,9 +99,12 @@ while true do
 
         if framesInAction2 >= framesPerAction2 then
             framesInAction2 = 0
-            currentActionIndex2 = (currentActionIndex2 % #actions2) + 1
+            currentActionIndex2 = (currentActionIndex2 % #{"Up", "Right", "Down", "Left"}) + 1
             emu.frameadvance()
-        end
+            
+
+       
+    end
     else
         
                     
@@ -118,7 +122,7 @@ while true do
             highestSpeSpc = math.max(highestSpeSpc, spespc)
             species = memory.readbyte(species_addr)
                       
-            print (item)
+        
             
 
             if shiny(atkdef, spespc) then
@@ -137,7 +141,7 @@ while true do
 
     if memory.readbyte(species_addr) ~= 0 then
 
-        for i=1,74,1 do
+        for i=1,48,1 do
             emu.frameadvance()
         end
 

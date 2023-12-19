@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/static/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent Shiny Display</title>
+  <style>
+    /* Add your CSS styles here */
+    .shiny-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1px;
+    }
+
+    .shiny-stats {
+      font-size: 16px; /* Adjust the font size as needed */
+      margin-right: 0px; /* Adjust the margin as needed */
+      margin-left: 0px; /* Adjust the margin as needed */
+    }
+
+    .shiny-image {
+      width: 110px;
+      height: 110px;
+      background-size: cover;
+      margin-right: 10px; /* Adjust the margin as needed */
+    }
+
+    .shiny-stats p {
+      margin: 0; /* Remove margin for <p> elements inside .shiny-stats */
+    }
+
+    .time-counter {
+      margin-top: 10px; /* Adjust the margin as needed */
+      font-size: 14px; /* Adjust the font size as needed */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shiny-container">
+    {% for shiny in data['RecentShinyEncounters'] %}
+    <div class="shiny-stats">
+      <p>ATK: {{ shiny['Attack'] }}</p>
+      <p>DEF: {{ shiny['Defense'] }}</p>
+      <p>SPE: {{ shiny['Speed'] }}</p>
+      <p>SPC: {{ shiny['Special'] }}</p>
+      <p>Item: {{ shiny['ItemName'] }}</p>
+      <div class="time-counter" id="time-counter-{{ loop.index }}"></div>
+      <script>
+        {% for shiny in data['RecentShinyEncounters'] %}
+          // JavaScript code for time counter
+          var startTime{{ loop.index }} = new Date('{{ shiny['Time'] }}').getTime();
+          var counterElement{{ loop.index }} = document.getElementById('time-counter-{{ loop.index }}');
+      
+          function calculateTimeDifference{{ loop.index }}() {
+            var currentTime = new Date().getTime();
+            var timeDifference = currentTime - startTime{{ loop.index }};
+  
+            // Adjust the time zone offset (in minutes)
+            var timeZoneOffset = new Date().getTimezoneOffset();
+            timeDifference += timeZoneOffset * 60 * 1000;
+  
+            var minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+            var hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+  
+            var counterText = '';
+            if (days > 0) {
+              counterText += days + 'd ';
+            }
+            if (hours > 0) {
+              counterText += hours + 'h';
+              if (days == 0) {
+                counterText += ' ';
+              }
+            }
+            if (minutes > 0 && days == 0) {
+              counterText += minutes + 'm';
+            }
+  
+            // Add 'ago' to the counter text
+            counterText += ' ago';
+  
+            counterElement{{ loop.index }}.textContent = counterText;
+          }
+  
+          // Update the counter initially
+          calculateTimeDifference{{ loop.index }}();
+  
+          // Update the counter every minute (60000 milliseconds)
+          setInterval(calculateTimeDifference{{ loop.index }}, 60000);
+        {% endfor %}
+  
+        // Check the shinyvalue and refresh the entire page if needed
+        setInterval(() => {
+          if ({{ data['shinyvalue'] }} === 1) {
+            location.reload();
+          }
+        }, 60000);
+      </script>
+    </div>
+    <div class="shiny-image" style="background-image: url('/static/shinygif/{{ shiny['Species'] }}.gif')"></div>
+    {% endfor %}
+  </div>
+</body>
+
+</html>

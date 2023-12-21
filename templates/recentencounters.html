@@ -15,14 +15,19 @@
         }
 
         .encounter img {
-            margin-left: 1px; /* Adjust the margin for the image */
-            margin-top: -45px; /* Adjust the margin to move the image upwards */
-            width: 120px; /* Adjust the width of the image as needed */
-            height: 120px; /* Adjust the height of the image as needed */
+            margin-left: -10px; /* Adjust the margin for the image */
+            margin-top: -15px; /* Adjust the margin to move the image upwards */
+            width: 110px; /* Adjust the width of the image as needed */
+            height: 110px; /* Adjust the height of the image as needed */
         }
 
         .encounter div {
             margin-right: 10px; /* Adjust the margin between text and image */
+            margin-top: -25px; /* Adjust the margin to move the image upwards */
+        }
+
+        .item {
+            margin-top: 5px; /* Adjust the margin to separate ITEM from the stats */
         }
     </style>
 </head>
@@ -59,8 +64,7 @@
                     <span>ATK: ${recentEncounterValues[i]['Attack']}</span><br>
                     <span>DEF: ${recentEncounterValues[i]['Defense']}</span><br>
                     <span>SPE: ${recentEncounterValues[i]['Speed']}</span><br>
-                    <span>SPD: ${recentEncounterValues[i]['Special']}</span><br><br>
-                    <span>ITEM: ${recentEncounterValues[i]['item_name']}</span><br><br>
+                    <span>SPD: ${recentEncounterValues[i]['Special']}</span><br>
                 </div>
                 <img src="${getGifFilePath(recentEncounterValues[i]['Species'])}" alt="GIF File Content">
                 
@@ -68,6 +72,12 @@
 
             // Append the encounter section to the container
             recentEncountersContainer.appendChild(encounterElement);
+
+            // Add ITEM section
+            const itemElement = document.createElement('div');
+            itemElement.className = 'item';
+            itemElement.innerHTML = `<span>ITEM: ${recentEncounterValues[i]['item_name']}</span><br><br>`;
+            recentEncountersContainer.appendChild(itemElement);
         }
     }
 

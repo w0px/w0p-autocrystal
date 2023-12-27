@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from modules.helditems import item_names
+from modules.helditems import get_item_name
 
 import requests
 import os
@@ -15,8 +15,9 @@ Total_Encounters = [0]
 Encounters_shiny = [0]
 file_path = "Total_Encounters.json"
 file_path2 = "Encounters_shiny.json"
+file_path3 = "Total_shinies.json"
 recent_shiny_file_path = "Recent_Shiny_Encounters.json"
-item_name = "none"
+item_name = "-"
 current_species = 0
 consecutive_encounter_count = 0
 last_change_count = change_count[0]
@@ -59,6 +60,16 @@ def read_variable_from_file2():
 
 Encounters_shiny = read_variable_from_file2()
 
+def read_variable_from_file3():
+    try:
+        with open(file_path3, "r") as file:
+            data = json.load(file)
+            return data.get('Total_shinies')
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0  
+
+Total_shinies = read_variable_from_file3()
+
 def write_variable_to_file(value):
     data = {'Total_Encounters': value}
     with open(file_path, "w") as file:
@@ -67,6 +78,11 @@ def write_variable_to_file(value):
 def write_variable_to_file2(value):
     data = {'Encounters_shiny': value}
     with open(file_path2, "w") as file:
+        json.dump(data, file)
+
+def write_variable_to_file3(value):
+    data = {'Total_shinies': value}
+    with open(file_path3, "w") as file:
         json.dump(data, file)
 
 start_time = time.time()
@@ -97,15 +113,7 @@ def update_data():
         defense = atkdef % 16
         speed = spespc // 16
         special = spespc % 16
-
-        def get_item_name(item):
-            # Check if the item value is in the dictionary
-            if item in item_names:
-                return item_names[item]
-            elif item == '0':
-                return 'None'
-            else:
-                return [item]
+           
 
         Encounters_shiny = read_variable_from_file2()
         # Update the 'data' dictionary
@@ -127,6 +135,8 @@ def update_data():
         data['CurrentStreakSpecies'] = current_streak_species
         data['LongestStreak'] = longest_streak
         data['RecentShinyEncounters'] = read_recent_shiny_from_file()
+        data['Total_shinies'] = read_variable_from_file3()
+       
 
 
         if 'atkdef' not in data or data['atkdef'] != atkdef:
@@ -154,18 +164,17 @@ def update_data():
             data['CurrentStreakSpecies'] = current_streak_species
             data['LongestStreak'] = longest_streak
 
-
-        # print (data['item_name'])
-        write_variable_to_file(Total_Encounters)
-        write_variable_to_file2(Encounters_shiny)
+            write_variable_to_file(Total_Encounters)
+            write_variable_to_file2(Encounters_shiny)
 
         if data['shinyvalue'] == 1:
             message = f"Shiny encounter!"
             Encounters_shiny = 0
-            data['shiny_time']= datetime.datetime.utcnow().isoformat()
             write_variable_to_file2(Encounters_shiny)
-            
-
+            #Total_shinies += 1
+            #write_variable_to_file3(Total_shinies)
+            data['shiny_time']= datetime.datetime.utcnow().isoformat()
+                    
             recent_shiny = {
             'Species': data['species'],
             'Attack': data['Attack'],
@@ -242,15 +251,21 @@ def streak():
 def index():
     return render_template('index.html', data=data)
 
+@app.route('/get_shiny_value')
+def get_shiny_value():
+    shiny_value = data.get('shinyvalue', 0)
+    return jsonify({'SV': shiny_value})
+
 @app.route('/get_badge_values')
 def get_badge_values():
     # Extract values from the 'data' dictionary
     latest_values = {
         'Attack': data.get('Attack', 0),
+        'SV': data.get('shinyvalue', 0),
         'Defense': data.get('Defense', 0),
         'Speed': data.get('Speed', 0),
         'Special': data.get('Special', 0),
-        'item_name': data.get('item_name', 'None'),
+        'item_name': data.get('item_name', '-'),
         'Species': data.get('species', 0),
         'Streak':  data.get('consecutive_encounter_count', 0),
     }

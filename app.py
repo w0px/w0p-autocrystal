@@ -17,12 +17,20 @@ file_path = "Total_Encounters.json"
 file_path2 = "Encounters_shiny.json"
 file_path3 = "Total_shinies.json"
 recent_shiny_file_path = "Recent_Shiny_Encounters.json"
+shiny_species_counter_file_path = "shiny_species_counter.json"
 item_name = "-"
 current_species = 0
 consecutive_encounter_count = 0
 last_change_count = change_count[0]
 current_streak_species = 0
 longest_streak = 0
+shiny_species_counter = {}
+
+try:
+    with open(shiny_species_counter_file_path, "r") as file:
+        shiny_species_counter = json.load(file)
+except (FileNotFoundError, json.JSONDecodeError):
+    shiny_species_counter = {}
 
 def read_recent_shiny_from_file():
     try:
@@ -98,7 +106,6 @@ def update_data():
     global longest_streak
 
     
-
     if request.method == 'POST':
         # Get the concatenated data from the request payload
         concatenated_data = request.form.get('payload')
@@ -136,13 +143,14 @@ def update_data():
         data['LongestStreak'] = longest_streak
         data['RecentShinyEncounters'] = read_recent_shiny_from_file()
         data['Total_shinies'] = read_variable_from_file3()
-       
-
+    
 
         if 'atkdef' not in data or data['atkdef'] != atkdef:
-            change_count[0] += 1  # Increment change count
+            change_count[0] += 1  
             Total_Encounters[0] += 1
             Encounters_shiny += 1
+            
+            
             if current_species == 0:
                 current_species = species
                 consecutive_encounter_count = 1
@@ -165,15 +173,28 @@ def update_data():
             data['LongestStreak'] = longest_streak
 
             write_variable_to_file(Total_Encounters)
-            write_variable_to_file2(Encounters_shiny)
+            write_variable_to_file2(Encounters_shiny)          
+            
 
         if data['shinyvalue'] == 1:
-            message = f"Shiny encounter!"
+                        
             Encounters_shiny = 0
             write_variable_to_file2(Encounters_shiny)
-            #Total_shinies += 1
-            #write_variable_to_file3(Total_shinies)
+            Total_shinies[0] += 1
+            write_variable_to_file3(Total_shinies)
+            species = data['species']
+            message = f"Shiny encounter!"
             data['shiny_time']= datetime.datetime.utcnow().isoformat()
+
+             # Update shiny species counter
+            species = int(data['species'])
+            shiny_species_counter[species] = shiny_species_counter.get(species, 0) + 1
+            data['speciescounter'] = shiny_species_counter.get(species, 0)
+
+            # Write shiny species counter to file
+            with open(shiny_species_counter_file_path, "w") as counter_file:
+                json.dump(shiny_species_counter, counter_file)
+            
                     
             recent_shiny = {
             'Species': data['species'],
@@ -182,8 +203,10 @@ def update_data():
             'Speed': data['Speed'],
             'Special': data['Special'],
             'Time': data['shiny_time'],
-            'ItemName': data['item_name']
+            'ItemName': data['item_name'],
+            'SpeciesCounter': data['speciescounter']
             }
+
 
             recent_shiny_list = read_recent_shiny_from_file()
             recent_shiny_list.insert(0, recent_shiny)  # Insert at the beginning
@@ -201,6 +224,10 @@ def update_data():
                 print("Message sent successfully")
             else:
                 print(f"Failed to send message. Status code: {response.status_code}")
+        
+            
+
+
 
         if data['Attack'] > 14 and data['Defense'] > 14 and data['Speed'] > 14 and data['Special'] > 14:
             message = f"perfect DV {data['species']} encountered"
@@ -251,10 +278,10 @@ def streak():
 def index():
     return render_template('index.html', data=data)
 
-@app.route('/get_shiny_value')
-def get_shiny_value():
-    shiny_value = data.get('shinyvalue', 0)
-    return jsonify({'SV': shiny_value})
+@app.route('/recent_shiny_data')
+def get_recent_shiny_data():
+    recent_shiny_data = read_recent_shiny_from_file()
+    return jsonify({'RecentShinyEncounters': recent_shiny_data})
 
 @app.route('/get_badge_values')
 def get_badge_values():

@@ -16,23 +16,32 @@
 
     .shiny-stats {
       font-size: 16px; /* Adjust the font size as needed */
-      margin-right: 0px; /* Adjust the margin as needed */
-      margin-left: 0px; /* Adjust the margin as needed */
+      margin-right: 10px; /* Adjust the margin as needed */
     }
 
     .shiny-image {
-      width: 110px;
-      height: 110px;
+      width: 120px;
+      height: 120px;
       background-size: cover;
       margin-right: 10px; /* Adjust the margin as needed */
+      margin-top: -20px;
     }
 
     .shiny-stats p {
       margin: 0; /* Remove margin for <p> elements inside .shiny-stats */
     }
 
+    .item-container {
+      display: flex;
+      flex-direction: column;
+      
+    }
+
+    .item-text {
+      font-size: 14px; /* Adjust the font size as needed */
+    }
+
     .time-counter {
-      margin-top: 10px; /* Adjust the margin as needed */
       font-size: 14px; /* Adjust the font size as needed */
     }
   </style>
@@ -43,65 +52,99 @@
     {% for shiny in data['RecentShinyEncounters'] %}
     <div class="shiny-stats">
       <p>ATK: {{ shiny['Attack'] }}</p>
-      <p>DEF: {{ shiny['Defense'] }}</p>
-      <p>SPE: {{ shiny['Speed'] }}</p>
-      <p>SPC: {{ shiny['Special'] }}</p>
-      <p>Item: {{ shiny['ItemName'] }}</p>
-      <div class="time-counter" id="time-counter-{{ loop.index }}"></div>
-      <script>
-        {% for shiny in data['RecentShinyEncounters'] %}
-          // JavaScript code for time counter
-          var startTime{{ loop.index }} = new Date('{{ shiny['Time'] }}').getTime();
-          var counterElement{{ loop.index }} = document.getElementById('time-counter-{{ loop.index }}');
-      
-          function calculateTimeDifference{{ loop.index }}() {
-            var currentTime = new Date().getTime();
-            var timeDifference = currentTime - startTime{{ loop.index }};
-  
-            // Adjust the time zone offset (in minutes)
-            var timeZoneOffset = new Date().getTimezoneOffset();
-            timeDifference += timeZoneOffset * 60 * 1000;
-  
-            var minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
-            var hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-  
-            var counterText = '';
-            if (days > 0) {
-              counterText += days + 'd ';
-            }
-            if (hours > 0) {
-              counterText += hours + 'h';
-              if (days == 0) {
-                counterText += ' ';
-              }
-            }
-            if (minutes > 0 && days == 0) {
-              counterText += minutes + 'm';
-            }
-  
-            // Add 'ago' to the counter text
-            counterText += ' ago';
-  
-            counterElement{{ loop.index }}.textContent = counterText;
-          }
-  
-          // Update the counter initially
-          calculateTimeDifference{{ loop.index }}();
-  
-          // Update the counter every minute (60000 milliseconds)
-          setInterval(calculateTimeDifference{{ loop.index }}, 60000);
-        {% endfor %}
-  
-        // Check the shinyvalue and refresh the entire page if needed
-        setInterval(() => {
-          if ({{ data['shinyvalue'] }} === 1) {
-            location.reload();
-          }
-        }, 60000);
-      </script>
+      <div class="item-container">
+        <div class="item-text">Item: {{ shiny['ItemName'] }}</div>
+        <div class="time-counter" id="time-counter-{{ loop.index }}"></div>
+      </div>
+      <p>Total: {{ shiny['SpeciesCounter'] }}</p>
     </div>
     <div class="shiny-image" style="background-image: url('/static/shinygif/{{ shiny['Species'] }}.gif')"></div>
+    <script>
+      // Function to fetch the latest RecentShinyEncounters data from Flask server
+      async function fetchLatestRecentShiny() {
+        try {
+          const response = await fetch('/recent_shiny_data');
+          const responseData = await response.json();
+
+          // Check if responseData is an object and has the expected array
+          if (responseData && Array.isArray(responseData.RecentShinyEncounters) && responseData.RecentShinyEncounters.length > 0) {
+            // Loop through each shiny element on the page and update its content
+            {% for shiny in data['RecentShinyEncounters'] %}
+              var shinyElement{{ loop.index }} = document.getElementById('time-counter-{{ loop.index }}');
+              if (shinyElement{{ loop.index }}) {
+                shinyElement{{ loop.index }}.textContent = calculateTimeDifference(responseData.RecentShinyEncounters[{{ loop.index - 1 }}].Time);
+              } else {
+                console.error('Element with ID time-counter-{{ loop.index }} not found.');
+              }
+            {% endfor %}
+          } else {
+            console.error('Invalid or empty data received:', responseData);
+          }
+        } catch (error) {
+          console.error('Error fetching latest RecentShinyEncounters data:', error);
+        }
+      }
+
+      // Fetch the latest RecentShinyEncounters data every 30 seconds
+      setInterval(() => {
+        fetchLatestRecentShiny();
+      }, 30000);
+
+      // JavaScript code for time counter
+      function calculateTimeDifference(startTime) {
+        var currentTime = new Date().getTime();
+        var timeDifference = currentTime - new Date(startTime).getTime();
+
+        // Adjust the time zone offset (in minutes)
+        var timeZoneOffset = new Date().getTimezoneOffset();
+        timeDifference += timeZoneOffset * 60 * 1000;
+
+        var minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+        var hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+        var counterText = '';
+        if (days > 0) {
+          counterText += days + 'd ';
+        }
+        if (hours > 0) {
+          counterText += hours + 'h';
+          if (days == 0) {
+            counterText += ' ';
+          }
+        }
+        if (minutes > 0 && days == 0) {
+          counterText += minutes + 'm';
+        }
+
+        // Add 'ago' to the counter text
+        counterText += ' ago';
+
+        return counterText;
+      }
+
+      // Update the counter initially for each shiny element
+      {% for shiny in data['RecentShinyEncounters'] %}
+        var shinyElement{{ loop.index }} = document.getElementById('time-counter-{{ loop.index }}');
+        if (shinyElement{{ loop.index }}) {
+          shinyElement{{ loop.index }}.textContent = calculateTimeDifference('{{ shiny['Time'] }}');
+        } else {
+          console.error('Element with ID time-counter-{{ loop.index }} not found.');
+        }
+      {% endfor %}
+
+      // Update the counter every minute (60000 milliseconds) for each shiny element
+      {% for shiny in data['RecentShinyEncounters'] %}
+        setInterval(function () {
+          var shinyElement{{ loop.index }} = document.getElementById('time-counter-{{ loop.index }}');
+          if (shinyElement{{ loop.index }}) {
+            shinyElement{{ loop.index }}.textContent = calculateTimeDifference('{{ shiny['Time'] }}');
+          } else {
+            console.error('Element with ID time-counter-{{ loop.index }} not found.');
+          }
+        }, 60000);
+      {% endfor %}
+    </script>
     {% endfor %}
   </div>
 </body>

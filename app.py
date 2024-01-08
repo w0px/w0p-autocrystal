@@ -7,7 +7,7 @@ import time
 import datetime 
 import json
 
-webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
+webhook_url = 'https://discord.com/'
 app = Flask(__name__)
 change_count = [0]
 data = {}

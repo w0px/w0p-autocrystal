@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/static/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent Shiny Display</title>
+  <style>
+    /* Add your CSS styles here */
+    .container-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px; /* Adjust the gap as needed */
+    }
+
+    .shiny-item-pair {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1px;
+    }
+
+    .shiny-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1px;
+    }
+
+    .shiny-stats {
+      font-size: 16px; /* Adjust the font size as needed */
+      margin-right: 10px; /* Adjust the margin as needed */
+    }
+
+    .shiny-image {
+      width: 120px;
+      height: 120px;
+      background-size: cover;
+      margin-right: 10px; /* Adjust the margin as needed */
+      margin-top: -20px;
+    }
+
+    .shiny-stats p {
+      margin: 0; /* Remove margin for <p> elements inside .shiny-stats */
+    }
+
+    .item-container {
+      display: flex;
+      flex-direction: column;
+      margin-top: 10px; /* Adjust the margin as needed */
+      margin-right: 120px;
+    }
+
+    .item-text {
+      font-size: 14px; /* Adjust the font size as needed */
+    }
+
+    .time-counter {
+      font-size: 14px; /* Adjust the font size as needed */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container-wrapper" id="shiny-container">
+    <!-- Shiny data will be inserted here dynamically -->
+  </div>
+
+  <script>
+    // Function to fetch the RecentShinyEncounters data from the JSON file
+    async function fetchRecentShinyData() {
+      try {
+        const response = await fetch('/static/Recent_Shiny_Encounters.json');
+        const responseData = await response.json();
+
+        // Check if responseData is an array and has data
+        if (Array.isArray(responseData) && responseData.length > 0) {
+          // Create HTML content for shiny data
+          const shinyContainer = document.getElementById('shiny-container');
+          shinyContainer.innerHTML = responseData.map((shiny, index) => {
+            return `
+              <div class="shiny-item-pair">
+                <div class="shiny-container">
+                  <div class="shiny-stats">
+                    <p>ATK: ${shiny.Attack}</p>
+                    <p>DEF: ${shiny.Defense}</p>
+                    <p>SPE: ${shiny.Speed}</p>
+                    <p>SPC: ${shiny.Special}</p>
+                    <p>Total: ${shiny.SpeciesCounter}</p>
+                  </div>
+                  <div class="shiny-image" style="background-image: url('/static/shinygif/${shiny.Species}.gif')"></div>
+                </div>
+                <div class="item-container">
+                  <div class="time-counter" id="time-counter-${index + 1}">${calculateTimeDifference(shiny.Time)}</div>
+                  <div class="item-text">Item: ${shiny.ItemName}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          console.error('Invalid or empty data received:', responseData);
+        }
+      } catch (error) {
+        console.error('Error fetching RecentShinyEncounters data:', error);
+      }
+    }
+
+    // Function to calculate time difference
+    function calculateTimeDifference(startTime) {
+      var currentTime = new Date().getTime();
+      var timeDifference = currentTime - new Date(startTime).getTime();
+      var timeZoneOffset = new Date().getTimezoneOffset();
+      timeDifference += timeZoneOffset * 60 * 1000;
+
+      var minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+      var hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      var days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+      var counterText = '';
+      if (days > 0) {
+        counterText += days + 'd ';
+      }
+      if (hours > 0) {
+        counterText += hours + 'h';
+        if (days == 0) {
+          counterText += ' ';
+        }
+      }
+      if (minutes > 0 && days == 0) {
+        counterText += minutes + 'm';
+      }
+
+      // Add 'ago' to the counter text
+      counterText += ' ago';
+
+      return counterText;
+    }
+
+    // Fetch the RecentShinyEncounters data initially
+    fetchRecentShinyData();
+
+    // Fetch the RecentShinyEncounters data every 30 seconds
+    setInterval(() => {
+      fetchRecentShinyData();
+    }, 30000);
+  </script>
+</body>
+
+</html>

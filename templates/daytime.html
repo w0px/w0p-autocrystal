@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>base info</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        #daytimeContainer {
+            position: relative;
+            display: inline-block;
+        }
+        
+        #daytimeText {
+            position: relative;
+            top: 30px; /* Adjust as needed */
+        }
+
+
+        #daytimeTranslation {
+            z-index: 1;
+            position: relative;
+        }
+
+        #daytimeImageContainer {
+            position: relative;
+            top: 0px;
+            left: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div id="daytimeContainer">
+        <span id="daytimeText">Daytime:</span>
+        <span id="daytimeTranslation"></span>
+        <div id="daytimeImageContainer">
+            <img id="daytimeImage" alt="Daytime Image" style="width: 35%;">
+        </div>
+    </div>
+
+    <script>
+        // Function to translate daytime values
+        function translateDaytime(daytimeValue) {
+            switch (daytimeValue) {
+                case 0:
+                    return "Night";
+                case 1:
+                    return "Morning";
+                case 2:
+                    return "Day";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        // Function to set the daytime image
+        function setDaytimeImage(daytimeValue) {
+            var imageElement = document.getElementById("daytimeImage");
+            if (imageElement) {
+                switch (daytimeValue) {
+                    case 0:
+                        imageElement.src = "/static/daytime/night.png";
+                        break;
+                    case 1:
+                        imageElement.src = "/static/daytime/morning.png";
+                        break;
+                    case 2:
+                        imageElement.src = "/static/daytime/day.png";
+                        break;
+                    default:
+                        // Set a default image or handle as needed
+                        imageElement.src = "/static/daytime/unknown.png";
+                }
+            }
+        }
+
+        // Update the content of the daytime element and image
+        function updateDaytimeContent() {
+            var daytimeElement = document.getElementById("daytimeTranslation");
+            if (daytimeElement) {
+                var daytimeValue = {{ data['daytime'] }};  // Replace with your actual variable
+                var translatedDaytime = translateDaytime(daytimeValue);
+                daytimeElement.textContent = translatedDaytime;
+
+                // Set the daytime image
+                setDaytimeImage(daytimeValue);
+            }
+        }
+
+        // Call the update function initially
+        updateDaytimeContent();
+
+        // Refresh the page every 0.5 seconds
+        setInterval(function() {
+            location.reload();
+        }, 360000);
+    </script>
+</body>
+</html>

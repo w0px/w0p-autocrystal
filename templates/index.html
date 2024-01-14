@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>base info</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    
+<div>
+    <span>Local Time: </span>
+    <span id="localTime"></span>
+  </div>
+  <div>
+    <span>Session Timer: </span>{{ data['SessionStart'] }}
+  </div>
+<div id="Pencounter">
+    <span>Phase Encounters:</span> {{ data['EncounterCount'] }}
+</div>  
+<div>
+    <span>Encounters since last shiny:</span>
+    <span id="data['Encounters_shiny']"></span>{{data['Encounters_shiny']}}
+</div> 
+<br>
+<div>
+    <span>Total Encounters:</span>
+    <span id="{{data['Total_Encounters']}}"></span>{{data['Total_Encounters']}}
+</div>
+<div>
+    <span>Total Shinies:</span>
+    <span id="{{data['Total_shinies']}}"></span>{{data['Total_shinies']}}
+</div>
+
+
+<script>
+
+
+function updateLocalTime() {
+    var now = new Date();
+    var hours = now.getHours();
+    var minutes = now.getMinutes();
+    var seconds = now.getSeconds();
+
+    // Add leading zeros if needed
+    hours = (hours < 10) ? '0' + hours : hours;
+    minutes = (minutes < 10) ? '0' + minutes : minutes;
+    seconds = (seconds < 10) ? '0' + seconds : seconds;
+
+    // Display the local time
+    var localTimeElement = document.getElementById('localTime');
+    localTimeElement.textContent = hours + ':' + minutes + ':' + seconds; 
+
+    }
+    updateLocalTime();
+       
+    // Refresh the page every 0.5 seconds
+    setTimeout(function() {
+    location.reload();}, 1000);
+
+</script>
+
+</body>
+</html>

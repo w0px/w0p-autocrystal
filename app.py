@@ -6,9 +6,12 @@ import os
 import time
 import datetime 
 import json
+from threading import Lock
+from flask_socketio import SocketIO
 
-webhook_url = 'https://discord.com/'
+webhook_url = 'https://discord.com/api/webhooks/1180644024789508209/10PducB3djhbNRO-NIz2Tplz88-qvW6pCVuVbPcaPRzQ7p5anWqgy-dRxIJwMiZ1P03U'
 app = Flask(__name__)
+socketio = SocketIO(app)
 change_count = [0]
 data = {}
 Total_Encounters = [0]
@@ -16,7 +19,7 @@ Encounters_shiny = [0]
 file_path = "Total_Encounters.json"
 file_path2 = "Encounters_shiny.json"
 file_path3 = "Total_shinies.json"
-recent_shiny_file_path = "Recent_Shiny_Encounters.json"
+recent_shiny_file_path = "static/Recent_Shiny_Encounters.json"
 shiny_species_counter_file_path = "shiny_species_counter.json"
 item_name = "-"
 current_species = 0
@@ -25,12 +28,29 @@ last_change_count = change_count[0]
 current_streak_species = 0
 longest_streak = 0
 shiny_species_counter = {}
+shiny_counter_lock = Lock()
+shinyhandling = 0
 
-try:
-    with open(shiny_species_counter_file_path, "r") as file:
-        shiny_species_counter = json.load(file)
-except (FileNotFoundError, json.JSONDecodeError):
-    shiny_species_counter = {}
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+    send_data_to_client()
+
+def send_data_to_client():
+    global data
+    socketio.emit('update_data', data)
+
+def send_shiny_update(recent_shiny_data):
+    socketio.emit('shinyUpdate', {'RecentShinyEncounters': recent_shiny_data})
+
+def load_shiny_species_counter():
+    try:
+        with open(shiny_species_counter_file_path, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    
+shiny_species_counter = load_shiny_species_counter()
 
 def read_recent_shiny_from_file():
     try:
@@ -93,6 +113,16 @@ def write_variable_to_file3(value):
     with open(file_path3, "w") as file:
         json.dump(data, file)
 
+def calculate_total_unique_shinies():
+    # Read the shiny_species_counter.json file
+    with open(shiny_species_counter_file_path, "r") as file:
+        shiny_species_counter = json.load(file)
+
+    # Calculate the total unique shinies count
+    total_unique_shinies_counter = len(shiny_species_counter)
+
+    return total_unique_shinies_counter
+
 start_time = time.time()
 data = {'SessionStart': format_time(0)} 
 
@@ -104,6 +134,7 @@ def update_data():
     global last_change_count
     global current_streak_species
     global longest_streak
+    global shinyhandling
 
     
     if request.method == 'POST':
@@ -112,7 +143,7 @@ def update_data():
 
 
         # Split the concatenated data into individual values
-        highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef = map(int, concatenated_data.split(','))
+        highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef, daytime = map(int, concatenated_data.split(','))
 
         elapsed_time = time.time() - start_time
 
@@ -143,8 +174,9 @@ def update_data():
         data['LongestStreak'] = longest_streak
         data['RecentShinyEncounters'] = read_recent_shiny_from_file()
         data['Total_shinies'] = read_variable_from_file3()
+        data['daytime'] = daytime
     
-
+       
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  
             Total_Encounters[0] += 1
@@ -173,29 +205,30 @@ def update_data():
             data['LongestStreak'] = longest_streak
 
             write_variable_to_file(Total_Encounters)
-            write_variable_to_file2(Encounters_shiny)          
-            
+            write_variable_to_file2(Encounters_shiny)
 
+             
+            
         if data['shinyvalue'] == 1:
-                        
             Encounters_shiny = 0
             write_variable_to_file2(Encounters_shiny)
             Total_shinies[0] += 1
             write_variable_to_file3(Total_shinies)
             species = data['species']
             message = f"Shiny encounter!"
-            data['shiny_time']= datetime.datetime.utcnow().isoformat()
+            data['shiny_time'] = datetime.datetime.utcnow().isoformat()
 
-             # Update shiny species counter
-            species = int(data['species'])
-            shiny_species_counter[species] = shiny_species_counter.get(species, 0) + 1
-            data['speciescounter'] = shiny_species_counter.get(species, 0)
+            # Update shiny species counter
+            species_id = str(data.get('species'))
+            if species_id:
+                with shiny_counter_lock:
+                    current_counter = shiny_species_counter.get(species_id, 0)
+                    shiny_species_counter[species_id] = current_counter + 1
 
-            # Write shiny species counter to file
-            with open(shiny_species_counter_file_path, "w") as counter_file:
-                json.dump(shiny_species_counter, counter_file)
-            
-                    
+            # Save updated species counter data
+            with open(shiny_species_counter_file_path, 'w') as file:
+                json.dump(shiny_species_counter, file, indent=2)
+
             recent_shiny = {
             'Species': data['species'],
             'Attack': data['Attack'],
@@ -204,15 +237,16 @@ def update_data():
             'Special': data['Special'],
             'Time': data['shiny_time'],
             'ItemName': data['item_name'],
-            'SpeciesCounter': data['speciescounter']
+            'SpeciesCounter': shiny_species_counter.get(species_id, 0)  
             }
-
 
             recent_shiny_list = read_recent_shiny_from_file()
             recent_shiny_list.insert(0, recent_shiny)  # Insert at the beginning
 
             # Keep only the last 3 shiny encounters
             recent_shiny_list = recent_shiny_list[:3]
+
+            send_shiny_update(recent_shiny_list)
 
             write_recent_shiny_to_file(recent_shiny_list)
             payload = {'content': message}
@@ -224,11 +258,13 @@ def update_data():
                 print("Message sent successfully")
             else:
                 print(f"Failed to send message. Status code: {response.status_code}")
+
+            
+            response = {'message': 'Data updated successfully'}
+            return jsonify(response)
         
             
-
-
-
+        
         if data['Attack'] > 14 and data['Defense'] > 14 and data['Speed'] > 14 and data['Special'] > 14:
             message = f"perfect DV {data['species']} encountered"
             payload = {'content': message}
@@ -247,7 +283,7 @@ def update_data():
         return jsonify(data)
 
     Total_Encounters[0] = read_variable_from_file()
-    
+
 
 @app.route('/highestDV')
 def highestDV():
@@ -277,6 +313,16 @@ def streak():
 @app.route('/')
 def index():
     return render_template('index.html', data=data)
+
+@app.route('/daytime')
+def daytime():
+    return render_template('daytime.html', data=data)
+
+@app.route('/uniqueshinies')
+def unique_shinies():
+    total_unique_shinies_counter = calculate_total_unique_shinies()
+
+    return render_template('uniqueshinies.html', data=data, total_unique_shinies_counter=total_unique_shinies_counter)
 
 @app.route('/recent_shiny_data')
 def get_recent_shiny_data():

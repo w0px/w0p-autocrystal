@@ -10,6 +10,7 @@ local shinyvalue = 0
 local flaskServerURL = "http://127.0.0.1:5000/update_data"
 local printedMessage = false
 local enemy_addr
+local daytime
 
 local version = memory.readbyte(0x141)
 local region = memory.readbyte(0x142)
@@ -31,6 +32,7 @@ actions2 = {"Right", "Up", "Left", "Down"}
 currentActionIndex2 = 1
 framesInAction2 = 0
 framesPerAction2 = 3
+local daytime_strings = {"Day", "Morning", "Night"}
 
 -- version check
 if version == 0x54 then
@@ -49,38 +51,43 @@ end
 local dv_flag_addr = enemy_addr + 0x21
 local species_addr = enemy_addr + 0x22
 local item_addr = enemy_addr - 0x05
+local daytime_addr = 0xd269
 
-function shiny(atkdef, spespc)
-    if spespc == 0xAA then
-        if atkdef == 0x2A or atkdef == 0x3A or atkdef == 0x6A or atkdef == 0x7A or atkdef == 0xAA or atkdef == 0xBA or atkdef == 0xEA or atkdef == 0xFA then
-            shinyvalue=1
-            return true
-        end
+
+
+function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef, daytime_value)
+    local daytime_string
+    daytime_value = memory.readbyte(daytime_addr)
+
+    if daytime_value == 0 then
+        daytime_string = "Day"
+    elseif daytime_value == 1 then
+        daytime_string = "Morning"
+    elseif daytime_value == 2 then
+        daytime_string = "Night"
+    else
+        daytime_string = "Unknown"
+        daytime_value = -1  -- Set a default value for the unknown case
     end
-    return false
-end
 
-
-function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc,atkdef)
     local data = {
-        highestAtkDef= highestAtkDef,
+        highestAtkDef = highestAtkDef,
         highestSpeSpc = highestSpeSpc,
         item = item,
         shinyvalue = shinyvalue,
         species = species,
         spespc = spespc,
-        atkdef = atkdef
+        atkdef = atkdef,
+        daytime = daytime_string
     }
 
     -- Concatenate variables into a single string
-    local concatenated_data = highestAtkDef .. "," .. highestSpeSpc .. "," .. item .. "," .. shinyvalue .. "," .. species .. "," .. spespc .. "," .. atkdef
-
-  
+    local concatenated_data = highestAtkDef .. "," .. highestSpeSpc .. "," .. item .. "," .. shinyvalue .. "," .. species .. "," .. spespc .. "," .. atkdef .. "," .. daytime_value
 
     -- Send the concatenated data as the payload
     local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
 
-    
+    -- ...
 end
 
 while true do
@@ -94,6 +101,7 @@ while true do
         joypad.set(input)
         emu.frameadvance()
         input[currentAction] = false
+        
 
         framesInAction2 = framesInAction2 + 1
 
@@ -121,8 +129,10 @@ while true do
             highestAtkDef = math.max(highestAtkDef, atkdef)
             highestSpeSpc = math.max(highestSpeSpc, spespc)
             species = memory.readbyte(species_addr)
-                      
-        
+            
+
+            
+            
             
 
             if shiny(atkdef, spespc) then

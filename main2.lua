@@ -11,7 +11,7 @@ local printedMessage = false
 local enemy_addr
 local daytime
 initialX, initialY = memory.readbyte(0xdcb8), memory.readbyte(0xdcb7)
-
+mapgroup, mapnumber = memory.readbyte(0xdcb5), memory.readbyte(0xdcb6)
 local version = memory.readbyte(0x141)
 local region = memory.readbyte(0x142)
 local encounterCount 
@@ -61,8 +61,9 @@ function shiny(atkdef, spespc)
     return false
 end
 
-function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef, daytime_value)
+function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef, daytime_value, map)
     local daytime_string
+    local map
     daytime_value = memory.readbyte(daytime_addr)
     
     local data = {
@@ -73,11 +74,10 @@ function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, spec
         species = species,
         spespc = spespc,
         atkdef = atkdef,
-        daytime = daytime_string
+        daytime = daytime_string,
     }
 
-    -- Concatenate variables into a single string
-    local concatenated_data = highestAtkDef .. "," .. highestSpeSpc .. "," .. item .. "," .. shinyvalue .. "," .. species .. "," .. spespc .. "," .. atkdef .. "," .. daytime_value
+    local concatenated_data = highestAtkDef .. "," .. highestSpeSpc .. "," .. item .. "," .. shinyvalue .. "," .. species .. "," .. spespc .. "," .. atkdef .. "," .. daytime_value .. "," .. mapgroup .. "," .. mapnumber
 
     -- Send the concatenated data as the payload
     local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
@@ -88,9 +88,15 @@ while true do
     
 
     if memory.readbyte(species_addr) == 0 then
-        for i=1,16,1 do
+        for i=1,15,1 do
             emu.frameadvance()
+            for key, _ in pairs(input) do
+                input[key] = false
+            end
         end
+        
+    
+        emu.frameadvance()
         
         local currentX, currentY = memory.readbyte(0xdcb8), memory.readbyte(0xdcb7)
 
@@ -105,7 +111,7 @@ while true do
                 emu.frameadvance()
                 if memory.readbyte(species_addr) ~= 0 then
                     emu.frameadvance()
-                    break  -- Exit the loop if the condition is no longer true
+                    break  
                 end
             end
 
@@ -115,7 +121,7 @@ while true do
                 emu.frameadvance()
                 if memory.readbyte(species_addr) ~= 0 then
                     emu.frameadvance()
-                    break  -- Exit the loop if the condition is no longer true
+                    break  
                 end
             end
         else

@@ -10,11 +10,12 @@ import datetime
 import json
 import atexit
 from threading import Lock
+import threading
 
 
-webhook_url_shiny = 'https://discord.com/api/webhooks/1200602877224304711/1c_fe-6dP-sSBvjQ684Ds5SO1khOUMtky8TjbN_p1ua6pwEI5AhOIG74ynXJr_hbFOk_' 
-webhook_url_perfect_dv = 'https://discord.com/api/webhooks/1200603065942806608/HfQJNkS4BMba-K4_iMIyD-TyrFpSif_UKu3O850xOITUkBYNneWCSuUxHB6jUM0KavPn'
-Session_webhook = "https://discord.com/api/webhooks/1201488494346915870/Yx18hrjFSCwR7fyVA5zmggaESg0VSxi4997NKsTcJY7XRvYmki2ZxzLmfruPh_cQ7uJx"
+webhook_url_shiny = 'xxx' 
+webhook_url_perfect_dv = 'xxx'
+Session_webhook = "xxx"
 
 app = Flask(__name__)
 change_count = [0]
@@ -40,6 +41,8 @@ embed = {"image": {"url": ""}}
 held_items_counter = {}
 lowest_dv_initialized = False
 lowest_dv = None
+total_species_counter = {}
+total_species_counter_file_path = "total_species_counter.json"
 
 
 def load_shiny_species_counter():
@@ -62,10 +65,28 @@ def write_recent_shiny_to_file(recent_shiny):
     with open(recent_shiny_file_path, "w") as file:
         json.dump(recent_shiny, file)
 
+def read_encounters_shiny_values():
+    try:
+        with open('encounters_shiny_values.json', 'r') as file:
+            data = json.load(file)
+            highest_encounters_shiny = data.get('highest', 0)
+            lowest_encounters_shiny = data.get('lowest', 0)
+    except FileNotFoundError:
+        highest_encounters_shiny = 0
+        lowest_encounters_shiny = 0
+
+    return highest_encounters_shiny, lowest_encounters_shiny
+
+highest_encounter_shiny, lowest_encounter_shiny = read_encounters_shiny_values()
+
 def format_time(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+
+def write_encounters_shiny_to_file(highest_encounter_shiny, lowest_encounter_shiny):
+    with open('encounters_shiny_values.json', 'w') as file:
+        json.dump({'highest': highest_encounter_shiny, 'lowest': lowest_encounter_shiny}, file)
 
 def read_variable_from_file():
     try:
@@ -117,12 +138,19 @@ def format_dv_encounter(encounter):
     dv_values = "/".join(map(str, encounter['DV']))
     return f"{dv_values} {species_name}"
 
+def send_discord_message(payload, webhook_url):
+    response = requests.post(webhook_url, json=payload)
+    if response.status_code == 204:
+        print("Message sent successfully")
+    else:
+        print(f"Failed to send message. Status code: {response.status_code}")
+
 def log_session_details():
 
     # Convert species counter to use Pokémon names
     species_counter_names = {pokemon_names.get(species_id, {"name": f"Unknown {species_id}"})['name']: count for species_id, count in species_counter.items()}
 
-    encounters_list = data.get('EncounterList', [])
+    encounters_list = data.get('EncounterList', [])  
 
     if encounters_list:
         # Get the encounter with the highest combined DV values
@@ -134,8 +162,13 @@ def log_session_details():
         highest_dv_encounter = {'Species': 'No encounters', 'DV': [0, 0, 0, 0]}
         lowest_dv_encounter = {'Species': 'No encounters', 'DV': [0, 0, 0, 0]}
 
+    with open('species_counter.json', 'r') as file:
+        total_species_counter = json.load(file)
+
     # Create a breakdown of session encounters by species
     encounters_breakdown = "\n".join(f"{pokemon_names.get(int(species_id), {'name': f'Unknown {species_id}'})['name']}: {count}" for species_id, count in species_counter.items())
+    
+    total_species_breakdown = "\n".join(f"{pokemon_names.get(int(species_id), {'name': f'Unknown {species_id}'})['name']}: {count}" for species_id, count in total_species_counter.items())
     
     held_items_breakdown = "\n".join(f"{item}: {count}" for item, count in held_items_counter.items())
 
@@ -143,15 +176,19 @@ def log_session_details():
     session_message = f"Session ended ⏰: {data.get('SessionStart', '')}\n" \
                       f"Location 🗺️: {data.get('map_name', '')}\n\n" \
                       f"Session Encounters ⚔️: \n{data.get('EncounterCount', '')}\n\n" \
-                      f"Species Encounter Breakdown 📊:\n{encounters_breakdown}\n\n" \
+                      f"Session Encounter Breakdown 📊:\n{encounters_breakdown}\n\n" \
+                      f"Encounters since last Shiny ✨: \n{data.get('Encounters_shiny', 0)}\n\n" \
                       f"Held Items Breakdown 🎁:\n{held_items_breakdown}\n\n" \
-                      f"Longest Streak 🔁: \n{data.get('LongestStreak', 0)} {pokemon_names.get(current_streak_species)['name']}\n\n" \
+                      f"Longest Streak 🔄: \n{data.get('LongestStreak', 0)} {pokemon_names.get(current_streak_species)['name']}\n\n" \
                       f"Session Highest DVs 🔼:\n{format_dv_encounter(highest_dv_encounter)}\n\n" \
                       f"Session Lowest DVs 🔽:\n{format_dv_encounter(lowest_dv_encounter)}\n\n" \
-                      f"Total Encounters 🌐: \n{data.get('Total_Encounters', 0)}\n" \
                       f"Total Shinies ✨: \n{data.get('Total_shinies', 0)}\n"\
+                      f"Longest Phase ⏫: \n{data.get('highest_encounters_shiny', 0)}\n"\
+                      f"Shortest Phase ⏬: \n{data.get('lowest_encounters_shiny', 0)}\n"\
+                      f"Total Encounters 🌐: \n{data.get('Total_Encounters', 0)}\n\n" \
+                      f"Total Encounter Breakdown 📊:\n{total_species_breakdown}\n\n" \
                       
-    
+                      
     # Create a payload for the webhook
     payload = {'content': session_message}
     headers = {'Content-Type': 'application/json'}
@@ -191,6 +228,8 @@ def update_data():
     global lowest_dv
     global lowest_dv_initialized
     perfect_dv_sent = False
+    global highest_encounter_shiny 
+    global lowest_encounter_shiny
 
     headers = {'Content-Type': 'application/json'}
     
@@ -219,6 +258,8 @@ def update_data():
         else:
             if dv_sum < sum(lowest_dv):
                 lowest_dv = [attack, defense, speed, special]
+
+        lowest_dv_sum = sum(lowest_dv)
           
 
         Encounters_shiny = read_variable_from_file2()
@@ -245,12 +286,12 @@ def update_data():
         data['daytime'] = daytime
         data['map'] = f"{mapgroup}.{mapnumber}"
         data['map_name'] = map_names.get(data['map'], "Unknown Location")
-        data['lowest_dv'] = lowest_dv
+        data['lowest_DV'] = lowest_dv_sum
+        data['lowest_encounters_shiny']= lowest_encounter_shiny
+        data['highest_encounters_shiny']= highest_encounter_shiny
 
         
         
-        
-
         if 'atkdef' not in data or data['atkdef'] != atkdef:
             change_count[0] += 1  
             Total_Encounters[0] += 1
@@ -291,12 +332,21 @@ def update_data():
             write_variable_to_file(Total_Encounters)
             write_variable_to_file2(Encounters_shiny)
 
-            # Update species counter
+            try:
+                with open('species_counter.json', 'r') as file:
+                    total_species_counter = json.load(file)
+            except FileNotFoundError:
+                total_species_counter = {}
+
             nsspecies_id = str(data.get('species'))
             if nsspecies_id:
                 with shiny_counter_lock:
                     nscurrent_counter = species_counter.get(nsspecies_id, 0)
                     species_counter[nsspecies_id] = nscurrent_counter + 1
+                    total_species_counter[nsspecies_id] = total_species_counter.get(nsspecies_id, 0) + 1
+
+            with open('species_counter.json', 'w') as file:
+                json.dump(total_species_counter, file, indent=2)
 
             species_id_str = str(nsspecies_id)
             species_name = pokemon_names.get(species_id_str, {'name': f'Unknown {species_id_str}'})['name']
@@ -305,11 +355,35 @@ def update_data():
                 'DV': [data['Attack'], data['Defense'], data['Speed'], data['Special']],
             }   
             data.setdefault('EncounterList', []).append(encounter_data)
-        
+
+            if data['Attack'] > 14 and data['Defense'] > 14 and data['Speed'] > 14 and data['Special'] > 14 and not perfect_dv_sent:
+                species = data['species']
+                species_info = pokemon_names.get(species, {"name": "Unknown"})
+                message = f"Perfect DV 15/15/15/15 {species_info['name']} encountered on {data['map_name']}!"
+                payload = {'content': message}
+                headers = {'Content-Type': 'application/json'}
+                perfect_dv_sent = True
+                thread = threading.Thread(target=send_discord_message, args=(payload, webhook_url_perfect_dv))
+                thread.start()
+
+            if data['Attack'] < 1 and data['Defense'] < 1 and data['Speed'] < 1 and data['Special'] < 1 and not perfect_dv_sent:
+                species = data['species']
+                species_info = pokemon_names.get(species, {"name": "Unknown"})
+                message = f"Perfect 0/0/0/0 DV {species_info['name']} encountered on {data['map_name']}!"
+                payload = {'content': message}
+                headers = {'Content-Type': 'application/json'}
+                perfect_dv_sent = True
+                thread = threading.Thread(target=send_discord_message, args=(payload, webhook_url_perfect_dv))
+                thread.start()
             
         if data['shinyvalue'] == 1:
+            if Encounters_shiny > highest_encounter_shiny:
+                highest_encounter_shiny = Encounters_shiny
+            if Encounters_shiny < lowest_encounter_shiny:
+                lowest_encounter_shiny = Encounters_shiny
             Encounters_shiny = 0
             write_variable_to_file2(Encounters_shiny)
+            write_encounters_shiny_to_file(highest_encounter_shiny, lowest_encounter_shiny)
             Total_shinies[0] += 1
             write_variable_to_file3(Total_shinies)
             species = data['species']
@@ -318,9 +392,8 @@ def update_data():
             gif_url = species_info.get('gif', "https://www.pokencyclopedia.info/sprites/gen2/ani_crystal_shiny/ani_c-S_unknown.gif")
             shiny_stats_message = f"{stats_message}"
 
-
             payload = {
-                'content': f"Shiny ✨{species_info['name']} encounter!",
+                'content': f"Shiny ✨{species_info['name']} encounter on on {data['map_name']}!",
                 'embeds': [ 
                     {
                         "image": {
@@ -334,7 +407,7 @@ def update_data():
                 ]
             }
             data['shiny_time'] = datetime.datetime.utcnow().isoformat()
-           
+
             # Update shiny species counter
             species_id = str(data.get('species'))
             if species_id:
@@ -347,14 +420,14 @@ def update_data():
                 json.dump(shiny_species_counter, file, indent=2)
 
             recent_shiny = {
-            'Species': data['species'],
-            'Attack': data['Attack'],
-            'Defense': data['Defense'],
-            'Speed': data['Speed'],
-            'Special': data['Special'],
-            'Time': data['shiny_time'],
-            'ItemName': data['item_name'],
-            'SpeciesCounter': shiny_species_counter.get(species_id, 0)
+                'Species': data['species'],
+                'Attack': data['Attack'],
+                'Defense': data['Defense'],
+                'Speed': data['Speed'],
+                'Special': data['Special'],
+                'Time': data['shiny_time'],
+                'ItemName': data['item_name'],
+                'SpeciesCounter': shiny_species_counter.get(species_id, 0)
             }
 
             recent_shiny_list = read_recent_shiny_from_file()
@@ -364,36 +437,8 @@ def update_data():
             recent_shiny_list = recent_shiny_list[:3]
 
             write_recent_shiny_to_file(recent_shiny_list)
-            response = requests.post(webhook_url_shiny, json=payload)
-
-            if response.status_code == 204:
-                print("Message sent successfully")
-            elif response.status_code == 400:
-                print(f"Bad Request: {response.text}")
-            else:
-                print(f"Failed to send message. Status code: {response.status_code}")
-
-            
-                response = {'message': 'Data updated successfully'}
-                return jsonify(response)
-        
-            
-        
-        if data['Attack'] > 14 and data['Defense'] > 14 and data['Speed'] > 14 and data['Special'] > 14 and not perfect_dv_sent:
-                species = data['species']
-                species_info = pokemon_names.get(species, {"name": "Unknown"})
-                message = f"Perfect DV 💎{species_info['name']} encountered!"
-                payload = {'content': message,}           
-                headers = {'Content-Type': 'application/json'}
-                perfect_dv_sent = True
-                response = requests.post(webhook_url_perfect_dv, json=payload, headers=headers)
-
-                if response.status_code == 204:
-                    print("Message sent successfully")
-                else:
-                    print(f"Failed to send message. Status code: {response.status_code}")
-
-                 
+            thread = threading.Thread(target=send_discord_message, args=(payload, webhook_url_shiny))
+            thread.start()
 
         return 'Data received successfully'
 
@@ -450,7 +495,8 @@ def get_values():
         'Total_Encounters': data.get('Total_Encounters', 0),
         'Encounters_shiny': data.get('Encounters_shiny', 0),
         'EncounterCount': data.get('EncounterCount', 0),
-        'Mapname' : data.get('map_name',0)
+        'Mapname' : data.get('map_name',0),
+        'lowest_DV' : data.get('lowest_DV')
     }
     return jsonify(values)
 

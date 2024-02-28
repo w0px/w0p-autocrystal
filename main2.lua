@@ -23,7 +23,7 @@ json = require("json")
 socket = require("socket")
 socket.http = require("socket.http")
 input = {}
-actions = {"B", "Right", "Right", "Down", "A", "A"}
+actions = {"B", "Right", "Right", "Down", "A","A"}
 currentActionIndex = 1
 framesInAction = 0
 framesPerAction = 1
@@ -86,18 +86,15 @@ end
 while true do
     emu.frameadvance()
     
-
     if memory.readbyte(species_addr) == 0 then
-        for i=1,15,1 do
+        
+
+        for i=1,8,1 do
             emu.frameadvance()
-            for key, _ in pairs(input) do
-                input[key] = false
-            end
+            joypad.set({B=true})
         end
         
-    
-        emu.frameadvance()
-        
+
         local currentX, currentY = memory.readbyte(0xdcb8), memory.readbyte(0xdcb7)
 
         if currentX ~= initialX or currentY ~= initialY and memory.readbyte(species_addr) == 0 then
@@ -125,15 +122,18 @@ while true do
                 end
             end
         else
-            
-            local currentAction = actions2[currentActionIndex]
-
-            input[currentAction] = true
-            joypad.set(input)
+            joypad.set({Right=true})
             emu.frameadvance()
-            input[currentAction] = false
-            currentActionIndex = (currentActionIndex % #actions2) + 1
-            
+            joypad.set({Right=false})
+            joypad.set({Left=true})
+            emu.frameadvance()
+            joypad.set({Left=false})
+            joypad.set({Down=true})
+            emu.frameadvance()
+            joypad.set({Down=false})
+            joypad.set({Up=true})
+            emu.frameadvance()
+            joypad.set({Up=false})              
             
         end
         
@@ -152,9 +152,7 @@ while true do
         
                   
         if shiny(atkdef, spespc) then
-            print("Shiny found!!")
             shinyvalue = 1
-            local shinyInfo = "Shiny found!!"
             send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef)
             break
         end
@@ -164,7 +162,7 @@ while true do
 
     if memory.readbyte(species_addr) ~= 0 then
 
-        for i=1,10,1 do
+        for i=1,9,1 do
             emu.frameadvance()
         end
 

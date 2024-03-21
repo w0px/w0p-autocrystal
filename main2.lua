@@ -83,7 +83,7 @@ function send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, spec
 
     -- Send the concatenated data as the payload
     -- print(concatenated_data)
-    -- local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
+    local status_code, response_body = comm.httpPost(flaskServerURL, concatenated_data)
 end
 
 function press_button(btn)

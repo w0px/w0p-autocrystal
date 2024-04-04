@@ -23,7 +23,7 @@ json = require("json")
 mem = require("memory")
 mem.SetRomBankAddress("Crystal")
 input = {}
-actions = {"B", "Right", "Right", "Down", "A","A"}
+actions = {"Right", "Right", "Right", "Down", "A","A"}
 currentActionIndex = 1
 framesInAction = 0
 framesPerAction = 1
@@ -52,6 +52,7 @@ local item_addr = enemy_addr - 0x05
 local daytime_addr = 0xd269
 
 local LoadBattleMenuAddr = mem.BankAddressToLinear(0x9, 0x4EF2)
+local EnemyWildmonInitialized = mem.BankAddressToLinear(0xF, 0x7648)
 
 function shiny(atkdef, spespc)
     if spespc == 0xAA then
@@ -100,6 +101,19 @@ mem.RegisterROMHook(LoadBattleMenuAddr, function()
     --print("Battle menu loaded")
     have_battle_controls = true
 end, "Detect Battle Menu")
+
+mem.RegisterROMHook(EnemyWildmonInitialized, function()
+    --print("combat started")
+        item = memory.readbyte(item_addr)
+        atkdef = memory.readbyte(enemy_addr)
+        spespc = memory.readbyte(enemy_addr + 1)
+        highestAtkDef = math.max(highestAtkDef, atkdef)
+        highestSpeSpc = math.max(highestSpeSpc, spespc)
+        species = memory.readbyte(species_addr)
+
+    send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef)
+    
+end, "Tell Display Battle Started / sending data")
 
 while true do
     emu.frameadvance()
@@ -156,10 +170,7 @@ while true do
         end
 
     else
-        while memory.readbyte(dv_flag_addr) ~= 0x01 do
-            emu.frameadvance()
-            press_button("B")
-        end
+        if memory.readbyte(species_addr) ~= 0 then
 
         item = memory.readbyte(item_addr)
         atkdef = memory.readbyte(enemy_addr)
@@ -167,7 +178,7 @@ while true do
         highestAtkDef = math.max(highestAtkDef, atkdef)
         highestSpeSpc = math.max(highestSpeSpc, spespc)
         species = memory.readbyte(species_addr)
-
+        
 
 
         if shiny(atkdef, spespc) then
@@ -176,16 +187,15 @@ while true do
             break
         end
 
-        send_data_to_flask(highestAtkDef, highestSpeSpc, item, shinyvalue, species, spespc, atkdef)
-    end
-
-    if memory.readbyte(species_addr) ~= 0 then
-
-        while not have_battle_controls do
+        while not have_battle_controls and memory.readbyte(species_addr) ~= 0 do
+            --
             emu.frameadvance()
             currentActionIndex = 1
             press_button("B")
+            
         end
+
+        
 
         local currentAction = actions[currentActionIndex]
 
@@ -198,5 +208,6 @@ while true do
             currentActionIndex = (currentActionIndex % #actions) + 1
             emu.frameadvance()
         end
+    end
     end
 end
